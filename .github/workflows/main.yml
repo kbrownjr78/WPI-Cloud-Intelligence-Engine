@@ -26,23 +26,17 @@ jobs:
           python-version: '3.10'
           cache: 'pip' # Automatically caches installed packages to optimize daily execution speed
 
-      # Step 3: Install a real, stable Google Chrome browser onto the Linux system for Selenium to use
-      - name: Deploy Google Chrome Virtual Architecture
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
-
-      # Step 4: Install your complete numerical analysis and web-scraping stack
+      # Step 3: Install your complete numerical analysis and web-scraping stack
       - name: Install Python Package Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install numpy selenium webdriver-manager pandas beautifulsoup4
 
-      # Step 5: Execute your script to scrape today's games for free and run the 100,000-loop simulations
+      # Step 4: Execute your script to scrape today's games for free and run the 100,000-loop simulations
       - name: Run Scraper and Compute Monte Carlo Model
         run: python automated_pipeline.py
 
-      # Step 6: Use internal Git commands to push the updated 'alpha_market_matrix.csv' back to your repo
+      # Step 5: Use internal Git commands to push the updated 'alpha_market_matrix.csv' back to your repo
       - name: Commit Generated Alpha Matrix to GitHub Repository
         run: |
           git config --global user.name "WPI Quant Bot"
