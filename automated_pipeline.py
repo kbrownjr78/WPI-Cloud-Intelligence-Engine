@@ -1,7 +1,7 @@
 """
-WPI Quantitative Sports Engine (v18.0 - High-Speed Plain Text Ingestion Circuit)
+WPI Quantitative Sports Engine (v19.0 - SportsDataverse API Circuit)
 File Name: automated_pipeline.py
-Chunk 1 of 4: Core Module Dependencies, Initialization, and Hard Market Filters
+Chunk 1 of 4: System Dependencies, Framework Setup, and Hard Market Filters
 """
 
 import os
@@ -38,7 +38,7 @@ class WPIRawEngine:
             
         return True, "PASSED"
     def run_simulation(self, sport, home_team, away_team, target_selection, home_metrics, away_metrics, env_metrics, market_odds, line_value=None, market_type='moneyline'):
-        """Executes 100,000-loop Monte Carlo distribution structures across multi-sport and targets."""
+        """Executes 100,000-loop Monte Carlo distribution structures across multi-sport and segmented targets."""
         passed, msg = self.evaluate_hard_market_filters(market_odds, sport, line_value, market_type)
         if not passed:
             return None, None, None, f"FILTERED: {msg}"
@@ -172,72 +172,69 @@ class WPIRawEngine:
         alpha_edge = p_wpi - p_market
         return p_wpi, p_market, alpha_edge, "SUCCESS"
 def run_cloud_pipeline():
-    print("🛰️ Connecting to Plain Text Sports Ingestion Hub...")
+    print("🛰️ Connecting to SportsDataverse Open-Source REST Infrastructure...")
     today_str = datetime.now().strftime("%Y-%m-%d")
+    date_numeric = datetime.now().strftime("%Y%m%d") # Format configuration required for SDV endpoints
     portfolio = []
     
-    try:
-        url = "https://plaintextsports.com"
-        response = requests.get(url, headers={"User-Agent": "WPI Quant Engine v18.0"}, timeout=10)
-        
-        if response.status_code == 200:
-            lines = response.text.split('\n')
-            print(f"📊 Document verified. Parsing {len(lines)} plain text database records.")
+    # SportsDataverse centralized repository endpoint definitions
+    sdv_endpoints = [
+        {"sport": "mlb", "url": f"https://espn.com{date_numeric}"},
+        {"sport": "basketball", "url": f"https://espn.com{date_numeric}"},
+        {"sport": "soccer", "url": f"https://espn.com{date_numeric}"}
+    ]
+    
+    for target in sdv_endpoints:
+        try:
+            sport_type = target["sport"]
+            print(f"🔗 Polling SportsDataverse Node: {sport_type.upper()} for data loop sequence...")
+            response = requests.get(target["url"], headers={"User-Agent": "SportsDataverse-Python-Wrapper"}, timeout=12)
             
-            current_league = "Global Circuit"
-            i = 0
-            while i < len(lines):
-                line = lines[i].strip()
+            if response.status_code == 200:
+                json_data = response.json()
+                events = json_data.get("events", [])
+                league_name = json_data.get("leagues", [{}])[0].get("name", "SportsDataverse Matrix Circuit")
+                print(f"📊 Isolated network arrays. Extracted {len(events)} active events.")
                 
-                # Dynamic Context Isolation Tracker parses current league category lines
-                if "World Cup" in line or "FIFA" in line:
-                    current_league = "FIFA World Cup"
-                elif "Major League Baseball" in line or "MLB" in line:
-                    current_league = "MLB"
-                elif "National Women's Soccer" in line or "NWSL" in line:
-                    current_league = "NWSL"
-                elif "Major League Soccer" in line or "MLS" in line:
-                    current_league = "MLS"
-                
-                # Dynamic ASCII boundary pattern match blocker: "+-----------------+"
-                if "+-------" in line or "+---" in line:
+                for event in events:
                     try:
-                        # Extract the inner contender string layouts
-                        team_1 = lines[i+2].replace('|', '').strip()
-                        team_2 = lines[i+3].replace('|', '').strip()
+                        competitions = event.get("competitions", [{}])[0]
+                        competitors = competitions.get("competitors", [])
                         
-                        if team_1 and team_2 and not team_1.startswith('+') and not team_2.startswith('+'):
-                            if current_league == "MLB":
-                                sport, m_type, odds, val = "mlb", "f5", -110, None
-                                home_m = {'starter_fip': 3.42, 'bullpen_xfip': 3.85, 'woba_vs_hand': 0.334, 'runs_per_inning': 0.52}
-                                away_m = {'starter_fip': 4.12, 'bullpen_xfip': 4.22, 'woba_vs_hand': 0.312, 'runs_per_inning': 0.48}
-                            elif current_league in ["FIFA World Cup", "NWSL", "MLS"]:
-                                sport, m_type, odds, val = "soccer", "moneyline", -110, None
-                                home_m = {'xg_adjusted': 1.85, 'sot_surge': 0.14, 'league_scalar': 1.0, 'xga_adjusted': 0.78, 'ppda': 8.2, 'clearance_factor': 1.15, 'form_xg_delta': 0.22, 'form_def_delta': -0.11, 'rest_hours': 96, 'travel_friction': 0.1}
-                                away_m = {'xg_adjusted': 1.62, 'sot_surge': 0.08, 'league_scalar': 1.0, 'xga_adjusted': 1.12, 'ppda': 10.5, 'clearance_factor': 0.95, 'form_xg_delta': -0.05, 'form_def_delta': 0.18, 'rest_hours': 72, 'travel_friction': 0.3}
-                            else:
-                                sport, m_type, odds, val = "basketball", "moneyline", -160, None
-                                home_m = {'xg_adjusted': 1.12, 'sot_surge': 0.05, 'league_scalar': 1.08, 'xga_adjusted': 0.96, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.06, 'form_def_delta': -0.02, 'rest_hours': 72, 'travel_friction': 0.0}
-                                away_m = {'xg_adjusted': 0.98, 'sot_surge': 0.02, 'league_scalar': 1.08, 'xga_adjusted': 1.10, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': -0.02, 'form_def_delta': 0.04, 'rest_hours': 48, 'travel_friction': 0.4}
+                        home_item = next((c for c in competitors if c.get("homeAway") == "home"), None)
+                        away_item = next((c for c in competitors if c.get("homeAway") == "away"), None)
+                        
+                        if home_item and away_item:
+                            home_team = home_item.get("team", {}).get("displayName")
+                            away_team = away_item.get('team', {}).get('displayName')
+                            
+                            if home_team and away_team:
+                                if sport_type == "basketball":
+                                    sport, m_type, odds, val = "basketball", "moneyline", -160, None
+                                    home_m = {'xg_adjusted': 1.12, 'sot_surge': 0.05, 'league_scalar': 1.08, 'xga_adjusted': 0.96, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.06, 'form_def_delta': -0.02, 'rest_hours': 72, 'travel_friction': 0.0}
+                                    away_m = {'xg_adjusted': 0.98, 'sot_surge': 0.02, 'league_scalar': 1.08, 'xga_adjusted': 1.10, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': -0.02, 'form_def_delta': 0.04, 'rest_hours': 48, 'travel_friction': 0.4}
+                                elif sport_type == "mlb":
+                                    sport, m_type, odds, val = "mlb", "f5", -110, None
+                                    home_m = {'starter_fip': 3.42, 'bullpen_xfip': 3.85, 'woba_vs_hand': 0.334, 'runs_per_inning': 0.52}
+                                    away_m = {'starter_fip': 4.12, 'bullpen_xfip': 4.22, 'woba_vs_hand': 0.312, 'runs_per_inning': 0.48}
+                                else:
+                                    sport, m_type, odds, val = "soccer", "moneyline", -110, None
+                                    home_m = {'xg_adjusted': 1.85, 'sot_surge': 0.14, 'league_scalar': 1.0, 'xga_adjusted': 0.78, 'ppda': 8.2, 'clearance_factor': 1.15, 'form_xg_delta': 0.22, 'form_def_delta': -0.11, 'rest_hours': 96, 'travel_friction': 0.1}
+                                    away_m = {'xg_adjusted': 1.62, 'sot_surge': 0.08, 'league_scalar': 1.0, 'xga_adjusted': 1.12, 'ppda': 10.5, 'clearance_factor': 0.95, 'form_xg_delta': -0.05, 'form_def_delta': 0.18, 'rest_hours': 72, 'travel_friction': 0.3}
 
-                            portfolio.append({
-                                "Sport": sport, "League": current_league, "Home": team_2, "Away": team_1,
-                                "Target": f"{team_2} Moneyline", "Odds": odds, "Type": m_type, "Value": val,
-                                "Home_M": home_m, "Away_M": away_m, "Env": {'temp': 74, 'humidity': 55, 'venue_index': 1.02, 'surface': 'clay', 'park_factor': 1.00}
-                            })
-                            i += 4
-                    except Exception:
-                        pass
-                i += 1
-    except Exception as e:
-        print(f"❌ Ingestion Interruption: {str(e)}")
+                                portfolio.append({
+                                    "Sport": sport, "League": league_name, "Home": home_team, "Away": away_team,
+                                    "Target": f"{home_team} ML", "Odds": odds, "Type": m_type, "Value": val,
+                                    "Home_M": home_m, "Away_M": away_m, "Env": {'temp': 74, 'humidity': 55, 'venue_index': 1.02, 'surface': 'clay', 'park_factor': 1.00}
+                                })
+                    except Exception: continue
+        except Exception: continue
 
-    # Forward the newly loaded data portfolio over to the closed processing block
     execute_matrix_processing(portfolio, today_str)
 def execute_matrix_processing(portfolio, today_str):
     """Processes simulations independently outside the network request block to preserve layout indenting."""
     if len(portfolio) == 0:
-        print("❌ CRITICAL ERROR: Plain Text Sports crawler returned 0 scheduled games.")
+        print("❌ CRITICAL ERROR: Live SportsDataverse API nodes returned 0 scheduled games.")
         print("🛑 Disengaging pipeline to prevent empty branch commits.")
         raise ValueError("DataIngestionError: Active portfolio tracking array tracks null.")
 
@@ -277,16 +274,16 @@ def execute_matrix_processing(portfolio, today_str):
     final_df = pd.concat([rank_prob, df_filtered], ignore_index=True)
     
     if not final_df.empty:
-        final_df["P_WPI"] = final_df.apply(lambda r: f"{r['P_WPI']*100:.1f}%" if r["Alpha_Edge"] != -99.0 else "FILTERED", axis=1)
-        final_df["P_Market"] = final_df.apply(lambda r: f"{r['P_Market']*100:.1f}%" if r["Alpha_Edge"] != -99.0 else "FILTERED", axis=1)
-        final_df["Alpha_Edge"] = final_df.apply(lambda r: f"{r['Alpha_Edge']*100:+.1f}%" if r["Alpha_Edge"] != -99.0 else "BLOCKED", axis=1)
+        final_df["P_WPI"] = final_df["P_WPI"].apply(lambda x: f"{x*100:.1f}%" if isinstance(x, float) else x)
+        final_df["P_Market"] = final_df["P_Market"].apply(lambda x: f"{x*100:.1f}%" if isinstance(x, float) else x)
+        final_df["Alpha_Edge"] = final_df["Alpha_Edge"].apply(lambda x: f"{x*100:+.1f}%" if isinstance(x, float) else x)
 
         # 💾 PERSISTENT APPEND EXPORT MODULE (mode='a')
         output_file = "alpha_market_matrix.csv"
         file_exists = os.path.isfile(output_file)
         
         final_df.to_csv(output_file, mode='a', index=False, header=not file_exists)
-        print(f"📊 SUCCESS! Appended {len(final_df)} plain text data rows cleanly to '{output_file}'.")
+        print(f"📊 SUCCESS! Appended {len(final_df)} new dynamic SportsDataverse entries to '{output_file}'.")
     else:
         print("⚠️ Pipeline alert: Calculated matrix returned empty. Data append skipped.")
 
