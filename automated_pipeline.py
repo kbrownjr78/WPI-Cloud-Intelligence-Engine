@@ -150,50 +150,51 @@ class WPIRawEngine:
 
                 engine = WPIRawEngine()
                 raw_results = []
-
-    for match in portfolio:
-        p_wpi, p_market, alpha, status = engine.run_simulation(
-            match["Sport"], match["Home"], match["Away"], match["Target"],
-            match["Home_M"], match["Away_M"], match["Env"], 
-            match["Odds"], match["Value"], match["Type"]
-        )        
-        if status == "SUCCESS":
-            raw_results.append({
-                "Date": today_str, "League": match["League"], "Matchup": f"{match['Home']} vs {match['Away']}",
-                "Target_Selection": match["Target"], "Market_Odds": match["Odds"], "Market_Type": match["Type"].upper(),
-                "P_WPI": p_wpi, "P_Market": p_market, "Alpha_Edge": alpha
-            })
-        else:
-            raw_results.append({
-                "Date": today_str, "League": match["League"], "Matchup": f"{match['Home']} vs {match['Away']}",
-                "Target_Selection": match["Target"], "Market_Odds": match["Odds"], "Market_Type": match["Type"].upper(),
-                "P_WPI": 0.0, "P_Market": 0.0, "Alpha_Edge": -99.0, "Notes": status
-            })
-    df_active = pd.DataFrame([r for r in raw_results if r.get("Alpha_Edge", -99.0) != -99.0])
-    df_filtered = pd.DataFrame([r for r in raw_results if r.get("Alpha_Edge", -99.0) == -99.0])      
-    # Branch Execution Multi-Rankings
-    rank_prob = df_active.sort_values(by="P_WPI", ascending=False).head(10).copy()
-    rank_prob["Optimization_Category"] = "TOP_10_PROBABILITY"    
+                
+        for match in portfolio:
+            p_wpi, p_market, alpha, status = engine.run_simulation(
+                match["Sport"], match["Home"], match["Away"], match["Target"],
+                match["Home_M"], match["Away_M"], match["Env"], 
+                match["Odds"], match["Value"], match["Type"]
+            )      
+            if status == "SUCCESS":
+                raw_results.append({
+                    "Date": today_str, "League": match["League"], "Matchup": f"{match['Home']} vs {match['Away']}",
+                    "Target_Selection": match["Target"], "Market_Odds": match["Odds"], "Market_Type": match["Type"].upper(),
+                    "P_WPI": p_wpi, "P_Market": p_market, "Alpha_Edge": alpha
+                })
+            else:
+                raw_results.append({
+                    "Date": today_str, "League": match["League"], "Matchup": f"{match['Home']} vs {match['Away']}",
+                    "Target_Selection": match["Target"], "Market_Odds": match["Odds"], "Market_Type": match["Type"].upper(),
+                    "P_WPI": 0.0, "P_Market": 0.0, "Alpha_Edge": -99.0, "Notes": status
+                })
+        df_active = pd.DataFrame([r for r in raw_results if r.get("Alpha_Edge", -99.0) != -99.0])
+        df_filtered = pd.DataFrame([r for r in raw_results if r.get("Alpha_Edge", -99.0) == -99.0])     
    
-    rank_ev = df_active.sort_values(by="Alpha_Edge", ascending=False).head(5).copy()
-    rank_ev["Optimization_Category"] = "TOP_5_EXPECTED_VALUE"
-    rank_props = df_active[df_active["Market_Type"].isin(["SPREAD", "PROP", "OVER_GOALS"])].sort_values(by="Alpha_Edge", ascending=False).head(5).copy()
-    rank_props["Optimization_Category"] = "TOP_5_SPREADS_AND_PROPS"
+        # Branch Execution Multi-Rankings
+        rank_prob = df_active.sort_values(by="P_WPI", ascending=False).head(10).copy()
+        rank_prob["Optimization_Category"] = "TOP_10_PROBABILITY"    
+   
+        rank_ev = df_active.sort_values(by="Alpha_Edge", ascending=False).head(5).copy()
+        rank_ev["Optimization_Category"] = "TOP_5_EXPECTED_VALUE"
+        rank_props = df_active[df_active["Market_Type"].isin(["SPREAD", "PROP", "OVER_GOALS"])].sort_values(by="Alpha_Edge", ascending=False).head(5).copy()
+        rank_props["Optimization_Category"] = "TOP_5_SPREADS_AND_PROPS"
     
-    final_df = pd.concat([rank_prob, rank_ev, rank_props, df_filtered], ignore_index=True)
-    final_df["P_WPI"] = final_df.apply(lambda r: f"{r['P_WPI']*100:.1f}%" if r["Alpha_Edge"] != -99.0 else "FILTERED", axis=1)
-    final_df["P_Market"] = final_df.apply(lambda r: f"{r['P_Market']*100:.1f}%" if r["Alpha_Edge"] != -99.0 else "FILTERED", axis=1)
-    final_df["Alpha_Edge"] = final_df.apply(lambda r: f"{r['Alpha_Edge']*100:+.1f}%" if r["Alpha_Edge"] != -99.0 else "BLOCKED", axis=1)
+        final_df = pd.concat([rank_prob, rank_ev, rank_props, df_filtered], ignore_index=True)
+        final_df["P_WPI"] = final_df.apply(lambda r: f"{r['P_WPI']*100:.1f}%" if r["Alpha_Edge"] != -99.0 else "FILTERED", axis=1)
+        final_df["P_Market"] = final_df.apply(lambda r: f"{r['P_Market']*100:.1f}%" if r["Alpha_Edge"] != -99.0 else "FILTERED", axis=1)
+        final_df["Alpha_Edge"] = final_df.apply(lambda r: f"{r['Alpha_Edge']*100:+.1f}%" if r["Alpha_Edge"] != -99.0 else "BLOCKED", axis=1)
 
-    output_file = "alpha_market_matrix.csv"
-    final_df.to_csv(output_file, index=False)
-    print(f"🎉 Complete. Outputs committed to '{output_file}'.")
+        output_file = "alpha_market_matrix.csv"
+        final_df.to_csv(output_file, index=False)
+        print(f"🎉 Complete. Outputs committed to '{output_file}'.")
         
-except Exception as e:
-    print(f"❌ Exception: {str(e)}")
-    raise e
-finally:
-    driver.quit()
+    except Exception as e:
+        print(f"❌ Exception: {str(e)}")
+        raise e
+    finally:
+        driver.quit()
     
 if __name__ == "__main__":
     run_cloud_pipeline()
