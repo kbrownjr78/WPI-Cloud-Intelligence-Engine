@@ -7,6 +7,6 @@ jobs:
   execute-pipeline:
     runs-on: ubuntu-latest # Free Linux container
     steps:
-      - run: 
+      - run: echo "Starting pipeline..."
       # ... (checkout, python setup, chrome installation, script execution)
       # ... (steps for committing the output CSV 'alpha_market_matrix.csv')
