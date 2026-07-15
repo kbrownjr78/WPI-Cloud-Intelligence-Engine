@@ -33,7 +33,7 @@ class WPIRawEngine:
             return 100 / (odds + 100)
         else:
             return abs(odds) / (abs(odds) + 100)
-        def evaluate_hard_market_filters(self, market_odds, sport, line_value=None, market_type=None):
+    def evaluate_hard_market_filters(self, market_odds, sport, line_value=None, market_type=None):
         """Executes strict Hard Market Filters & Post-Audit Constraints."""
         # 1. Pricing Threshold Cutoff Filter
         if market_odds < -175:
@@ -116,39 +116,40 @@ class WPIRawEngine:
         alpha_edge = p_wpi - p_market
 
         return p_wpi, p_market, alpha_edge, "SUCCESS"
-    def run_cloud_pipeline():
-    print("🛰️ Booting Headless Processing Modules...")
-    chrome_options = Options()
-    chrome_options.add_argument("--headless=new") 
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-    
-    driver = webdriver.Chrome(options=chrome_options)
-    today_str = datetime.now().strftime("%Y-%m-%d")
-    
-    try:
-        driver.get("https://fbref.com")
-        time.sleep(2)
-        
-        # Comprehensive Master Matrix Board Payload
-        portfolio = [
-            {"Sport": "tennis", "League": "ATP Gstaad", "Home": "Stefanos Tsitsipas", "Away": "Jan-Lennard Struff", "Target": "Tsitsipas Match Winner", "Odds": -155, "Type": "moneyline", "Value": None, "Home_M": {'elo_surface': {'clay': 1950}, 'dominance_ratio': 1.21, 'hold_pct': 0.86, 'break_pct': 0.28, 'first_serve_pct': 0.67, 'first_serve_pts_won': 0.76, 'games_played_72h': 18, 'rest_hours': 48}, "Away_M": {'elo_surface': {'clay': 1780}, 'dominance_ratio': 1.04, 'hold_pct': 0.84, 'break_pct': 0.18, 'first_serve_pct': 0.61, 'first_serve_pts_won': 0.72, 'games_played_72h': 24, 'rest_hours': 24}, "Env": {'surface': 'clay'}},
-            {"Sport": "soccer", "League": "FIFA World Cup", "Home": "Argentina", "Away": "England", "Target": "Argentina To Qualify", "Odds": -120, "Type": "to_qualify", "Value": None, "Home_M": {'xg_adjusted': 1.85, 'sot_surge': 0.14, 'league_scalar': 1.0, 'xga_adjusted': 0.78, 'ppda': 8.2, 'clearance_factor': 1.15, 'form_xg_delta': 0.22, 'form_def_delta': -0.11, 'rest_hours': 96, 'travel_friction': 0.1}, "Away_M": {'xg_adjusted': 1.62, 'sot_surge': 0.08, 'league_scalar': 1.0, 'xga_adjusted': 1.12, 'ppda': 10.5, 'clearance_factor': 0.95, 'form_xg_delta': -0.05, 'form_def_delta': 0.18, 'rest_hours': 72, 'travel_friction': 0.3}, "Env": {'temp': 78, 'humidity': 62, 'venue_index': 1.05}},
-            {"Sport": "tennis", "League": "WTA Budapest", "Home": "Diana Shnaider", "Away": "Qualifier", "Target": "Set 1 Winner: Shnaider", "Odds": -170, "Type": "moneyline", "Value": None, "Home_M": {'elo_surface': {'clay': 1820}, 'dominance_ratio': 1.18, 'hold_pct': 0.78, 'break_pct': 0.35, 'first_serve_pct': 0.65, 'first_serve_pts_won': 0.70, 'games_played_72h': 12, 'rest_hours': 48}, "Away_M": {'elo_surface': {'clay': 1610}, 'dominance_ratio': 0.95, 'hold_pct': 0.68, 'break_pct': 0.22, 'first_serve_pct': 0.58, 'first_serve_pts_won': 0.62, 'games_played_72h': 36, 'rest_hours': 18}, "Env": {'surface': 'clay'}},
-            {"Sport": "basketball", "League": "WNBA", "Home": "Minnesota Lynx", "Away": "LA Sparks", "Target": "Minnesota Lynx ML", "Odds": -160, "Type": "moneyline", "Value": None, "Home_M": {'xg_adjusted': 1.15, 'sot_surge': 0.06, 'league_scalar': 1.08, 'xga_adjusted': 0.94, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.08, 'form_def_delta': -0.04, 'rest_hours': 72, 'travel_friction': 0.0}, "Away_M": {'xg_adjusted': 0.96, 'sot_surge': 0.01, 'league_scalar': 1.08, 'xga_adjusted': 1.12, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': -0.04, 'form_def_delta': 0.06, 'rest_hours': 48, 'travel_friction': 0.4}, "Env": {'temp': 72, 'humidity': 45, 'venue_index': 1.00}},
-            {"Sport": "tennis", "League": "ATP Bastad", "Home": "Casper Ruud", "Away": "Carballes Baena", "Target": "Ruud Match Winner", "Odds": -175, "Type": "moneyline", "Value": None, "Home_M": {'elo_surface': {'clay': 1910}, 'dominance_ratio': 1.16, 'hold_pct': 0.83, 'break_pct': 0.26, 'first_serve_pct': 0.66, 'first_serve_pts_won': 0.74, 'games_played_72h': 14, 'rest_hours': 48}, "Away_M": {'elo_surface': {'clay': 1740}, 'dominance_ratio': 1.01, 'hold_pct': 0.76, 'break_pct': 0.21, 'first_serve_pct': 0.62, 'first_serve_pts_won': 0.66, 'games_played_72h': 21, 'rest_hours': 24}, "Env": {'surface': 'clay'}},
-            {"Sport": "basketball", "League": "NBA Summer League", "Home": "Orlando Magic", "Away": "Philadelphia 76ers", "Target": "Orlando Magic ML", "Odds": -160, "Type": "moneyline", "Value": None, "Home_M": {'xg_adjusted': 1.08, 'sot_surge': 0.04, 'league_scalar': 1.00, 'xga_adjusted': 0.98, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.04, 'form_def_delta': -0.01, 'rest_hours': 24, 'travel_friction': 0.1}, "Away_M": {'xg_adjusted': 1.01, 'sot_surge': 0.02, 'league_scalar': 1.00, 'xga_adjusted': 1.04, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.00, 'form_def_delta': 0.03, 'rest_hours': 24, 'travel_friction': 0.1}, "Env": {'temp': 72, 'humidity': 45, 'venue_index': 1.00}},
-            {"Sport": "basketball", "League": "WNBA", "Home": "Indiana Fever", "Away": "GS Valkyries", "Target": "Indiana Fever ML", "Odds": -115, "Type": "moneyline", "Value": None, "Home_M": {'xg_adjusted': 1.10, 'sot_surge': 0.05, 'league_scalar': 1.08, 'xga_adjusted': 1.05, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.05, 'form_def_delta': 0.02, 'rest_hours': 48, 'travel_friction': 0.0}, "Away_M": {'xg_adjusted': 1.02, 'sot_surge': 0.03, 'league_scalar': 1.08, 'xga_adjusted': 1.08, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.01, 'form_def_delta': 0.05, 'rest_hours': 48, 'travel_friction': 0.2}, "Env": {'temp': 72, 'humidity': 45, 'venue_index': 1.00}},
-            {"Sport": "basketball", "League": "NBA Summer League", "Home": "Boston Celtics", "Away": "Sacramento Kings", "Target": "Boston Celtics +3.5", "Odds": -110, "Type": "spread", "Value": 3.5, "Home_M": {'xg_adjusted': 1.06, 'sot_surge': 0.04, 'league_scalar': 1.00, 'xga_adjusted': 1.00, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.03, 'form_def_delta': -0.02, 'rest_hours': 24, 'travel_friction': 0.1}, "Away_M": {'xg_adjusted': 1.02, 'sot_surge': 0.02, 'league_scalar': 1.00, 'xga_adjusted': 1.03, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.01, 'form_def_delta': 0.02, 'rest_hours': 48, 'travel_friction': 0.1}, "Env": {'temp': 72, 'humidity': 45, 'venue_index': 1.00}},
-            {"Sport": "soccer", "League": "FIFA World Cup", "Home": "Argentina", "Away": "England", "Target": "Over 2.5 Total Goals", "Odds": 135, "Type": "over_goals", "Value": 2.5, "Home_M": {'xg_adjusted': 1.85, 'sot_surge': 0.14, 'league_scalar': 1.0, 'xga_adjusted': 0.78, 'ppda': 8.2, 'clearance_factor': 1.15, 'form_xg_delta': 0.22, 'form_def_delta': -0.11, 'rest_hours': 96, 'travel_friction': 0.1}, "Away_M": {'xg_adjusted': 1.62, 'sot_surge': 0.08, 'league_scalar': 1.0, 'xga_adjusted': 1.12, 'ppda': 10.5, 'clearance_factor': 0.95, 'form_xg_delta': -0.05, 'form_def_delta': 0.18, 'rest_hours': 72, 'travel_friction': 0.3}, "Env": {'temp': 78, 'humidity': 62, 'venue_index': 1.05}},
-            {"Sport": "soccer", "League": "FIFA World Cup", "Home": "Argentina", "Away": "England", "Target": "J. Bellingham Anytime GS", "Odds": 270, "Type": "prop", "Value": None, "Home_M": {'xg_adjusted': 1.85, 'sot_surge': 0.14, 'league_scalar': 1.0, 'xga_adjusted': 0.78, 'ppda': 8.2, 'clearance_factor': 1.15, 'form_xg_delta': 0.22, 'form_def_delta': -0.11, 'rest_hours': 96, 'travel_friction': 0.1}, "Away_M": {'xg_adjusted': 1.62, 'sot_surge': 0.08, 'league_scalar': 1.0, 'xga_adjusted': 1.12, 'ppda': 10.5, 'clearance_factor': 0.95, 'form_xg_delta': -0.05, 'form_def_delta': 0.18, 'rest_hours': 72, 'travel_friction': 0.3}, "Env": {'temp': 78, 'humidity': 62, 'venue_index': 1.05}},
-            {"Sport": "basketball", "League": "WNBA", "Home": "Chicago Sky", "Away": "Seattle Storm", "Target": "Match Total Over 165", "Odds": -110, "Type": "total", "Value": 165.0, "Home_M": {'xg_adjusted': 1.00, 'sot_surge': 0.01, 'league_scalar': 1.08, 'xga_adjusted': 1.02, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': -0.02, 'form_def_delta': 0.01, 'rest_hours': 72, 'travel_friction': 0.0}, "Away_M": {'xg_adjusted': 1.05, 'sot_surge': 0.04, 'league_scalar': 1.08, 'xga_adjusted': 1.00, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.04, 'form_def_delta': -0.02, 'rest_hours': 48, 'travel_friction': 0.4}, "Env": {'temp': 72, 'humidity': 45, 'venue_index': 1.00}}
-        ]
 
-        engine = WPIRawEngine()
-        raw_results = []
+    def run_cloud_pipeline():
+            print("🛰️ Booting Headless Processing Modules...")
+            chrome_options = Options()
+            chrome_options.add_argument("--headless=new") 
+            chrome_options.add_argument("--no-sandbox")
+            chrome_options.add_argument("--disable-dev-shm-usage")
+            chrome_options.add_argument("--disable-gpu")
+            chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36") 
+    
+            driver = webdriver.Chrome(options=chrome_options)
+            today_str = datetime.now().strftime("%Y-%m-%d") 
+            
+            try:
+                driver.get("https://fbref.com")
+                time.sleep(2)      
+        
+                # Comprehensive Master Matrix Board Payload
+                portfolio = [
+                    {"Sport": "tennis", "League": "ATP Gstaad", "Home": "Stefanos Tsitsipas", "Away": "Jan-Lennard Struff", "Target": "Tsitsipas Match Winner", "Odds": -155, "Type": "moneyline", "Value": None, "Home_M": {'elo_surface': {'clay': 1950}, 'dominance_ratio': 1.21, 'hold_pct': 0.86, 'break_pct': 0.28, 'first_serve_pct': 0.67, 'first_serve_pts_won': 0.76, 'games_played_72h': 18, 'rest_hours': 48}, "Away_M": {'elo_surface': {'clay': 1780}, 'dominance_ratio': 1.04, 'hold_pct': 0.84, 'break_pct': 0.18, 'first_serve_pct': 0.61, 'first_serve_pts_won': 0.72, 'games_played_72h': 24, 'rest_hours': 24}, "Env": {'surface': 'clay'}},
+                    {"Sport": "soccer", "League": "FIFA World Cup", "Home": "Argentina", "Away": "England", "Target": "Argentina To Qualify", "Odds": -120, "Type": "to_qualify", "Value": None, "Home_M": {'xg_adjusted': 1.85, 'sot_surge': 0.14, 'league_scalar': 1.0, 'xga_adjusted': 0.78, 'ppda': 8.2, 'clearance_factor': 1.15, 'form_xg_delta': 0.22, 'form_def_delta': -0.11, 'rest_hours': 96, 'travel_friction': 0.1}, "Away_M": {'xg_adjusted': 1.62, 'sot_surge': 0.08, 'league_scalar': 1.0, 'xga_adjusted': 1.12, 'ppda': 10.5, 'clearance_factor': 0.95, 'form_xg_delta': -0.05, 'form_def_delta': 0.18, 'rest_hours': 72, 'travel_friction': 0.3}, "Env": {'temp': 78, 'humidity': 62, 'venue_index': 1.05}},
+                    {"Sport": "tennis", "League": "WTA Budapest", "Home": "Diana Shnaider", "Away": "Qualifier", "Target": "Set 1 Winner: Shnaider", "Odds": -170, "Type": "moneyline", "Value": None, "Home_M": {'elo_surface': {'clay': 1820}, 'dominance_ratio': 1.18, 'hold_pct': 0.78, 'break_pct': 0.35, 'first_serve_pct': 0.65, 'first_serve_pts_won': 0.70, 'games_played_72h': 12, 'rest_hours': 48}, "Away_M": {'elo_surface': {'clay': 1610}, 'dominance_ratio': 0.95, 'hold_pct': 0.68, 'break_pct': 0.22, 'first_serve_pct': 0.58, 'first_serve_pts_won': 0.62, 'games_played_72h': 36, 'rest_hours': 18}, "Env": {'surface': 'clay'}},
+                    {"Sport": "basketball", "League": "WNBA", "Home": "Minnesota Lynx", "Away": "LA Sparks", "Target": "Minnesota Lynx ML", "Odds": -160, "Type": "moneyline", "Value": None, "Home_M": {'xg_adjusted': 1.15, 'sot_surge': 0.06, 'league_scalar': 1.08, 'xga_adjusted': 0.94, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.08, 'form_def_delta': -0.04, 'rest_hours': 72, 'travel_friction': 0.0}, "Away_M": {'xg_adjusted': 0.96, 'sot_surge': 0.01, 'league_scalar': 1.08, 'xga_adjusted': 1.12, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': -0.04, 'form_def_delta': 0.06, 'rest_hours': 48, 'travel_friction': 0.4}, "Env": {'temp': 72, 'humidity': 45, 'venue_index': 1.00}},
+                    {"Sport": "tennis", "League": "ATP Bastad", "Home": "Casper Ruud", "Away": "Carballes Baena", "Target": "Ruud Match Winner", "Odds": -175, "Type": "moneyline", "Value": None, "Home_M": {'elo_surface': {'clay': 1910}, 'dominance_ratio': 1.16, 'hold_pct': 0.83, 'break_pct': 0.26, 'first_serve_pct': 0.66, 'first_serve_pts_won': 0.74, 'games_played_72h': 14, 'rest_hours': 48}, "Away_M": {'elo_surface': {'clay': 1740}, 'dominance_ratio': 1.01, 'hold_pct': 0.76, 'break_pct': 0.21, 'first_serve_pct': 0.62, 'first_serve_pts_won': 0.66, 'games_played_72h': 21, 'rest_hours': 24}, "Env": {'surface': 'clay'}},
+                    {"Sport": "basketball", "League": "NBA Summer League", "Home": "Orlando Magic", "Away": "Philadelphia 76ers", "Target": "Orlando Magic ML", "Odds": -160, "Type": "moneyline", "Value": None, "Home_M": {'xg_adjusted': 1.08, 'sot_surge': 0.04, 'league_scalar': 1.00, 'xga_adjusted': 0.98, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.04, 'form_def_delta': -0.01, 'rest_hours': 24, 'travel_friction': 0.1}, "Away_M": {'xg_adjusted': 1.01, 'sot_surge': 0.02, 'league_scalar': 1.00, 'xga_adjusted': 1.04, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.00, 'form_def_delta': 0.03, 'rest_hours': 24, 'travel_friction': 0.1}, "Env": {'temp': 72, 'humidity': 45, 'venue_index': 1.00}},
+                    {"Sport": "basketball", "League": "WNBA", "Home": "Indiana Fever", "Away": "GS Valkyries", "Target": "Indiana Fever ML", "Odds": -115, "Type": "moneyline", "Value": None, "Home_M": {'xg_adjusted': 1.10, 'sot_surge': 0.05, 'league_scalar': 1.08, 'xga_adjusted': 1.05, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.05, 'form_def_delta': 0.02, 'rest_hours': 48, 'travel_friction': 0.0}, "Away_M": {'xg_adjusted': 1.02, 'sot_surge': 0.03, 'league_scalar': 1.08, 'xga_adjusted': 1.08, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.01, 'form_def_delta': 0.05, 'rest_hours': 48, 'travel_friction': 0.2}, "Env": {'temp': 72, 'humidity': 45, 'venue_index': 1.00}},
+                    {"Sport": "basketball", "League": "NBA Summer League", "Home": "Boston Celtics", "Away": "Sacramento Kings", "Target": "Boston Celtics +3.5", "Odds": -110, "Type": "spread", "Value": 3.5, "Home_M": {'xg_adjusted': 1.06, 'sot_surge': 0.04, 'league_scalar': 1.00, 'xga_adjusted': 1.00, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.03, 'form_def_delta': -0.02, 'rest_hours': 24, 'travel_friction': 0.1}, "Away_M": {'xg_adjusted': 1.02, 'sot_surge': 0.02, 'league_scalar': 1.00, 'xga_adjusted': 1.03, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.01, 'form_def_delta': 0.02, 'rest_hours': 48, 'travel_friction': 0.1}, "Env": {'temp': 72, 'humidity': 45, 'venue_index': 1.00}},
+                    {"Sport": "soccer", "League": "FIFA World Cup", "Home": "Argentina", "Away": "England", "Target": "Over 2.5 Total Goals", "Odds": 135, "Type": "over_goals", "Value": 2.5, "Home_M": {'xg_adjusted': 1.85, 'sot_surge': 0.14, 'league_scalar': 1.0, 'xga_adjusted': 0.78, 'ppda': 8.2, 'clearance_factor': 1.15, 'form_xg_delta': 0.22, 'form_def_delta': -0.11, 'rest_hours': 96, 'travel_friction': 0.1}, "Away_M": {'xg_adjusted': 1.62, 'sot_surge': 0.08, 'league_scalar': 1.0, 'xga_adjusted': 1.12, 'ppda': 10.5, 'clearance_factor': 0.95, 'form_xg_delta': -0.05, 'form_def_delta': 0.18, 'rest_hours': 72, 'travel_friction': 0.3}, "Env": {'temp': 78, 'humidity': 62, 'venue_index': 1.05}},
+                    {"Sport": "soccer", "League": "FIFA World Cup", "Home": "Argentina", "Away": "England", "Target": "J. Bellingham Anytime GS", "Odds": 270, "Type": "prop", "Value": None, "Home_M": {'xg_adjusted': 1.85, 'sot_surge': 0.14, 'league_scalar': 1.0, 'xga_adjusted': 0.78, 'ppda': 8.2, 'clearance_factor': 1.15, 'form_xg_delta': 0.22, 'form_def_delta': -0.11, 'rest_hours': 96, 'travel_friction': 0.1}, "Away_M": {'xg_adjusted': 1.62, 'sot_surge': 0.08, 'league_scalar': 1.0, 'xga_adjusted': 1.12, 'ppda': 10.5, 'clearance_factor': 0.95, 'form_xg_delta': -0.05, 'form_def_delta': 0.18, 'rest_hours': 72, 'travel_friction': 0.3}, "Env": {'temp': 78, 'humidity': 62, 'venue_index': 1.05}},
+                    {"Sport": "basketball", "League": "WNBA", "Home": "Chicago Sky", "Away": "Seattle Storm", "Target": "Match Total Over 165", "Odds": -110, "Type": "total", "Value": 165.0, "Home_M": {'xg_adjusted': 1.00, 'sot_surge': 0.01, 'league_scalar': 1.08, 'xga_adjusted': 1.02, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': -0.02, 'form_def_delta': 0.01, 'rest_hours': 72, 'travel_friction': 0.0}, "Away_M": {'xg_adjusted': 1.05, 'sot_surge': 0.04, 'league_scalar': 1.08, 'xga_adjusted': 1.00, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.04, 'form_def_delta': -0.02, 'rest_hours': 48, 'travel_friction': 0.4}, "Env": {'temp': 72, 'humidity': 45, 'venue_index': 1.00}}
+                ]
+
+                engine = WPIRawEngine()
+                raw_results = []
 
         for match in portfolio:
             p_wpi, p_market, alpha, status = engine.run_simulation(
@@ -200,6 +201,3 @@ class WPIRawEngine:
 
 if __name__ == "__main__":
     run_cloud_pipeline()
-
-
-
