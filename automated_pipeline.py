@@ -184,39 +184,35 @@ def run_cloud_pipeline():
                     "P_WPI": 0.0, "P_Market": 0.0, "Alpha_Edge": -99.0, "Notes": status
                 })
 
-        # 🗂️ DUAL-OPTIMIZATION MULTI-RANKING FILTERS
+               # Convert to Pandas DataFrame for Sorting Optimizations
         df_active = pd.DataFrame([r for r in raw_results if r.get("Alpha_Edge", -99.0) != -99.0])
         df_filtered = pd.DataFrame([r for r in raw_results if r.get("Alpha_Edge", -99.0) == -99.0])
         
-        # Portfolio Alpha: Top 10 by Simulated True Probability
+        # 1. Ranking Filter A: Top 10 by Simulated True Probability
         rank_prob = df_active.sort_values(by="P_WPI", ascending=False).head(10).copy()
         rank_prob["Optimization_Category"] = "TOP_10_PROBABILITY"
         
-        # Portfolio Beta: Top 5 by Raw Expected Value (EV / Alpha Edge)
+        # 2. Ranking Filter B: Top 5 by Expected Value (EV / Alpha Edge)
         rank_ev = df_active.sort_values(by="Alpha_Edge", ascending=False).head(5).copy()
         rank_ev["Optimization_Category"] = "TOP_5_EXPECTED_VALUE"
 
-        # Portfolio Gamma: Top 5 Spreads and Props Performance Matrices
-        rank_props = df_active[df_active["Market_Type"].isin(["SPREAD", "PROP", "OVER_GOALS"])].sort_values(by="Alpha_Edge", ascending=False).head(5).copy()
-        rank_props["Optimization_Category"] = "TOP_5_SPREADS_AND_PROPS"
-
-        # Concatenate and reformat structures into human-scannable outputs
-        final_df = pd.concat([rank_prob, rank_ev, rank_props, df_filtered], ignore_index=True)
+        # Concatenate multi-ranking tiers with hard-pruned/filtered records
+        final_df = pd.concat([rank_prob, rank_ev, df_filtered], ignore_index=True)
+        
         if not final_df.empty:
             final_df["P_WPI"] = final_df.apply(lambda r: f"{r['P_WPI']*100:.1f}%" if r["Alpha_Edge"] != -99.0 else "FILTERED", axis=1)
             final_df["P_Market"] = final_df.apply(lambda r: f"{r['P_Market']*100:.1f}%" if r["Alpha_Edge"] != -99.0 else "FILTERED", axis=1)
             final_df["Alpha_Edge"] = final_df.apply(lambda r: f"{r['Alpha_Edge']*100:+.1f}%" if r["Alpha_Edge"] != -99.0 else "BLOCKED", axis=1)
 
-        # Write clean architecture back to the repository CSV path
+        # Output Directives to Cloud Repository Workspace
         output_file = "alpha_market_matrix.csv"
         final_df.to_csv(output_file, index=False)
-        print(f"💾 SUCCESS! Scraped alpha market matrix written to '{output_file}'.")
+        print(f"🎉 Complete. Outputs committed to '{output_file}' via dual sorting filters.")
         
     except Exception as e:
-        print(f"❌ Critical Runtime Exception: {str(e)}")
+        print(f"❌ Exception: {str(e)}")
         raise e
     finally:
-        print("🛑 Terminating browser process...")
         driver.quit()
 
 if __name__ == "__main__":
