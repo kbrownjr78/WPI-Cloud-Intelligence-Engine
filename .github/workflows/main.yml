@@ -34,6 +34,8 @@ jobs:
 
       # Step 4: Execute your script to scrape today's games for free and run the 100,000-loop simulations
       - name: Run Scraper and Compute Monte Carlo Model
+        env:
+          API_SPORTS_SECRET_TOKEN: ${{ secrets.API_SPORTS_SECRET_TOKEN }}
         run: python automated_pipeline.py
 
       # Step 5: Use internal Git commands to push the updated 'alpha_market_matrix.csv' back to your repo
