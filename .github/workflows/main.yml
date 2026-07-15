@@ -1,12 +1,16 @@
 name: WPI Free Automated Cloud Scraper and Engine
+
 on:
   schedule:
-    - cron: '0 07 * * *' # Runs daily at 7:00 AM UTC
+    - cron: '0 11 * * *' # Runs daily at 11:00 AM UTC
   workflow_dispatch: # Allows manual trigger
+
 jobs:
   execute-pipeline:
     runs-on: ubuntu-latest # Free Linux container
     steps:
-      - run: echo "Starting pipeline..."
+      - name: Placeholder Step # ✅ Fix: A dash item must exist right below steps
+        run: echo "Starting pipeline..."
+
       # ... (checkout, python setup, chrome installation, script execution)
       # ... (steps for committing the output CSV 'alpha_market_matrix.csv')
