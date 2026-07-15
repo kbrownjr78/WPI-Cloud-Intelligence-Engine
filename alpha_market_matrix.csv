@@ -1,1 +1,4 @@
-
+Date,League,Matchup,Market_Odds,Market_Type,Simulated_True_Probability,Implied_Market_Probability,Calculated_Alpha_Edge
+2026-07-15,FIFA World Cup Semifinal,Argentina vs England,114,TO_QUALIFY,88.9%,46.7%,+42.2%
+2026-07-15,WNBA,Indiana Fever vs Golden State Valkyries,-115,MONEYLINE,39.5%,53.5%,-14.0%
+2026-07-15,WNBA,Chicago Sky vs Seattle Storm,-110,TOTAL,FILTERED/PRUNED,FILTERED/PRUNED,FILTERED: BLOCKED: Alternate total (165.0) lands within hyper-dense public scoring nodes.
