@@ -167,7 +167,20 @@ def run_cloud_pipeline():
                 "Calculated_Alpha_Edge": alpha
             })
             
-        # STEP C: Export Matrix Directly to Workspace CSV
+                # STEP C: Export Matrix Directly to Workspace CSV
         df = pd.DataFrame(final_rows)
         output_file = "alpha_market_matrix.csv"
         df.to_csv(output_file, index=False)
+        print(f"🎉 PIPELINE COMPLETE. Matrix output cleanly compiled to '{output_file}'.")
+        
+    except Exception as e:
+        print(f"❌ Critical Pipeline Failure: {str(e)}")
+        
+    finally:
+        # Crucial: This block must be indented to match the 'try' statement
+        print("🛑 Closing automated browser instance...")
+        driver.quit()
+
+if __name__ == "__main__":
+    run_cloud_pipeline()
+
