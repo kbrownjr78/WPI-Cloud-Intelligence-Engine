@@ -1,5 +1,5 @@
 """
-WPI Quantitative Sports Engine (v13.5 - High-Stability API Ingestion Circuit)
+WPI Quantitative Sports Engine (v14.0 - Global Yahoo Multi-Sport Ingestion Circuit)
 File Name: automated_pipeline.py
 Chunk 1 of 4: System Dependencies, Initialization Layer, and Core Mechanics
 """
@@ -11,11 +11,16 @@ import time
 from datetime import datetime
 import numpy as np
 import pandas as pd
-import requests
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 
 class WPIRawEngine:
     def __init__(self):
-        print("⚡ WPI Autonomous Engine Active. Calibrating cross-sport parameter arrays...")
+        print("⚡ WPI Multi-Sport Engine Active. Calibrating cross-sport parameter arrays...")
 
     def sigmoid(self, x):
         """Standard logistic sigmoid function compressing interaction tokens between 0 and 1."""
@@ -33,11 +38,9 @@ class WPIRawEngine:
 
     def evaluate_hard_market_filters(self, market_odds, sport, line_value=None, market_type=None):
         """Enforces Section 3 Hard Market Filters & Post-Audit Safety Constraints."""
-        # 1. Pricing Threshold Cutoff Filter
         if market_odds < -175:
             return False, f"PRUNED: Premium requires break-even index worse than -175 ({market_odds})"
             
-        # NOTE: Soccer regulation insulation rule and Basketball public noise total blocks are deactivated.
         return True, "PASSED"
     def run_simulation(self, sport, home_team, away_team, target_selection, home_metrics, away_metrics, env_metrics, market_odds, line_value=None, market_type='moneyline'):
         """Executes 100,000-loop Monte Carlo distribution structures across multi-sport and segmented targets."""
@@ -174,73 +177,77 @@ class WPIRawEngine:
         alpha_edge = p_wpi - p_market
         return p_wpi, p_market, alpha_edge, "SUCCESS"
 def run_cloud_pipeline():
-    print("🛰️ Opening API Ingestion Layer...")
+    print("🛰️ Booting Multi-Sport Headless Chrome Scraper Node for Yahoo Sports...")
+    chrome_options = Options()
+    chrome_options.add_argument("--headless=new") 
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+    
+    driver = webdriver.Chrome(options=chrome_options)
     today_str = datetime.now().strftime("%Y-%m-%d")
     portfolio = []
     
-    league_endpoints = {
-        "soccer": "https://espn.com",
-        "basketball": "https://espn.com",
-        "tennis": "https://espn.com",
-        "mlb": "https://espn.com"
-    }
-    
-    for sport_key, url in league_endpoints.items():
-        try:
-            print(f"🔗 Requesting clean schedule arrays from ESPN {sport_key.upper()} backend...")
-            response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
-            if response.status_code != 200: 
+    try:
+        print("🔗 Crawling Yahoo Sports central daily schedule dashboard...")
+        driver.get("https://yahoo.com")
+        time.sleep(6) # Allows dynamic asynchronous layout script grids to render completely
+        
+        html_content = driver.page_source
+        soup = BeautifulSoup(html_content, 'html.parser')
+        
+        # Scrape all functional multi-sport match card element sections visible on execution day
+        game_modules = soup.find_all('div', {'class': lambda x: x and ('game-card' in x or 'match-container' in x or 'schedule-contents' in x)})
+        print(f"📊 Extracted HTML blocks. Parsing {len(game_modules)} potential Yahoo target grids.")
+        
+        for game in game_modules:
+            try:
+                sport_label = game.get('data-sport', 'soccer')
+                home_team = game.find('span', {'class': lambda x: x and 'team-name' in x or 'home' in x or 'away' in x}).text.strip()
+                away_team = game.find_next('span', {'class': lambda x: x and 'team-name' in x or 'home' in x or 'away' in x}).text.strip()
+                league_node = game.find('span', {'class': lambda x: x and 'league' in x or 'title' in x})
+                league_name = league_node.text.strip() if league_node else "Global Pro Circuit"
+                
+                if home_team and away_team and home_team != away_team:
+                    # Map equations and baseline matrix metrics matching the scraped sport profile
+                    if 'wnba' in league_name.lower() or 'basketball' in sport_label.lower() or 'nba' in league_name.lower():
+                        sport, m_type, odds, val = "basketball", "moneyline", -160, None
+                        home_m = {'xg_adjusted': 1.12, 'sot_surge': 0.05, 'league_scalar': 1.08, 'xga_adjusted': 0.96, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.06, 'form_def_delta': -0.02, 'rest_hours': 72, 'travel_friction': 0.0}
+                        away_m = {'xg_adjusted': 0.98, 'sot_surge': 0.02, 'league_scalar': 1.08, 'xga_adjusted': 1.10, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': -0.02, 'form_def_delta': 0.04, 'rest_hours': 48, 'travel_friction': 0.4}
+                    elif 'tennis' in sport_label.lower() or 'atp' in league_name.lower() or 'wta' in league_name.lower() or 'itf' in league_name.lower():
+                        sport, m_type, odds, val = "tennis", "moneyline", -155, None
+                        home_m = {'elo_surface': {'clay': 1950}, 'dominance_ratio': 1.21, 'hold_pct': 0.86, 'break_pct': 0.28, 'first_serve_pct': 0.67, 'first_serve_pts_won': 0.76, 'games_played_72h': 18, 'rest_hours': 48}
+                        away_m = {'elo_surface': {'clay': 1780}, 'dominance_ratio': 1.04, 'hold_pct': 0.84, 'break_pct': 0.18, 'first_serve_pct': 0.61, 'first_serve_pts_won': 0.72, 'games_played_72h': 24, 'rest_hours': 24}
+                    elif 'mlb' in league_name.lower() or 'baseball' in sport_label.lower() or 'mlb' in sport_label.lower():
+                        sport, m_type, odds, val = "mlb", "f5", -110, None
+                        home_m = {'starter_fip': 3.42, 'bullpen_xfip': 3.85, 'woba_vs_hand': 0.334, 'runs_per_inning': 0.52}
+                        away_m = {'starter_fip': 4.12, 'bullpen_xfip': 4.22, 'woba_vs_hand': 0.312, 'runs_per_inning': 0.48}
+                    else: 
+                        sport, m_type, odds, val = "soccer", "moneyline", -110, None
+                        home_m = {'xg_adjusted': 1.85, 'sot_surge': 0.14, 'league_scalar': 1.0, 'xga_adjusted': 0.78, 'ppda': 8.2, 'clearance_factor': 1.15, 'form_xg_delta': 0.22, 'form_def_delta': -0.11, 'rest_hours': 96, 'travel_friction': 0.1}
+                        away_m = {'xg_adjusted': 1.62, 'sot_surge': 0.08, 'league_scalar': 1.0, 'xga_adjusted': 1.12, 'ppda': 10.5, 'clearance_factor': 0.95, 'form_xg_delta': -0.05, 'form_def_delta': 0.18, 'rest_hours': 72, 'travel_friction': 0.3}
+
+                    portfolio.append({
+                        "Sport": sport, "League": league_name, "Home": home_team, "Away": away_team,
+                        "Target": f"{home_team} Clean Line", "Odds": odds, "Type": m_type, "Value": val,
+                        "Home_M": home_m, "Away_M": away_m, "Env": {'temp': 74, 'humidity': 55, 'venue_index': 1.02, 'surface': 'clay', 'park_factor': 1.00}
+                    })
+            except Exception:
                 continue
-            data = response.json()
-            events = data.get('events', [])
-            
-            for event in events:
-                try:
-                    league_name = data.get('leagues', [{}]).get('name', 'ESPN Pro Circuit')
-                    competition = event.get('competitions', [{}])
-                    competitors = competition.get('competitors', [])
-                    home_item = next((c for c in competitors if c.get('homeAway') == 'home'), None)
-                    away_item = next((c for c in competitors if c.get('homeAway') == 'away'), None)
-                    
-                    if home_item and away_item:
-                        home_team = home_item.get('team', {}).get('displayName')
-                        away_team = away_item.get('team', {}).get('displayName')
-                        if home_team and away_team:
-                            if sport_key == "basketball":
-                                sport, m_type, odds, val = "basketball", "moneyline", -160, None
-                                home_m = {'xg_adjusted': 1.12, 'sot_surge': 0.05, 'league_scalar': 1.08, 'xga_adjusted': 0.96, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.06, 'form_def_delta': -0.02, 'rest_hours': 72, 'travel_friction': 0.0}
-                                away_m = {'xg_adjusted': 0.98, 'sot_surge': 0.02, 'league_scalar': 1.08, 'xga_adjusted': 1.10, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': -0.02, 'form_def_delta': 0.04, 'rest_hours': 48, 'travel_friction': 0.4}
-                            elif sport_key == "tennis":
-                                sport, m_type, odds, val = "tennis", "moneyline", -155, None
-                                home_m = {'elo_surface': {'clay': 1950}, 'dominance_ratio': 1.21, 'hold_pct': 0.86, 'break_pct': 0.28, 'first_serve_pct': 0.67, 'first_serve_pts_won': 0.76, 'games_played_72h': 18, 'rest_hours': 48}
-                                away_m = {'elo_surface': {'clay': 1780}, 'dominance_ratio': 1.04, 'hold_pct': 0.84, 'break_pct': 0.18, 'first_serve_pct': 0.61, 'first_serve_pts_won': 0.72, 'games_played_72h': 24, 'rest_hours': 24}
-                            elif sport_key == "mlb":
-                                sport, m_type, odds, val = "mlb", "f5", -110, None
-                                home_m = {'starter_fip': 3.42, 'bullpen_xfip': 3.85, 'woba_vs_hand': 0.334, 'runs_per_inning': 0.52}
-                                away_m = {'starter_fip': 4.12, 'bullpen_xfip': 4.22, 'woba_vs_hand': 0.312, 'runs_per_inning': 0.48}
-                            else:
-                                sport, m_type, odds, val = "soccer", "moneyline", -110, None
-                                home_m = {'xg_adjusted': 1.85, 'sot_surge': 0.14, 'league_scalar': 1.0, 'xga_adjusted': 0.78, 'ppda': 8.2, 'clearance_factor': 1.15, 'form_xg_delta': 0.22, 'form_def_delta': -0.11, 'rest_hours': 96, 'travel_friction': 0.1}
-                                away_m = {'xg_adjusted': 1.62, 'sot_surge': 0.08, 'league_scalar': 1.0, 'xga_adjusted': 1.12, 'ppda': 10.5, 'clearance_factor': 0.95, 'form_xg_delta': -0.05, 'form_def_delta': 0.18, 'rest_hours': 72, 'travel_friction': 0.3}
+    except Exception as e:
+        print(f"❌ Scraper Node Exception: {str(e)}")
+    finally:
+        driver.quit()
 
-                            portfolio.append({
-                                "Sport": sport, "League": league_name, "Home": home_team, "Away": away_team,
-                                "Target": f"{home_team} Clean Line", "Odds": odds, "Type": m_type, "Value": val,
-                                "Home_M": home_m, "Away_M": away_m, "Env": {'temp': 74, 'humidity': 55, 'venue_index': 1.02, 'surface': 'clay', 'park_factor': 1.00}
-                            })
-                except Exception: 
-                    continue
-        except Exception: 
-            continue
-
-    # Transmit acquired portfolio array elements directly to the analytics engine layer
-    process_portfolio_data(portfolio, today_str)
-def process_portfolio_data(portfolio, today_str):
+    # Pass the scraped array data directly over to the closed processing block
+    execute_matrix_processing(portfolio, today_str)
+def execute_matrix_processing(portfolio, today_str):
     """Processes simulations independently outside the network request block to preserve layout indenting."""
     if len(portfolio) == 0:
-        print("❌ CRITICAL ERROR: Live API data nodes returned 0 scheduled games.")
-        print("🛑 Disengaging pipeline to prevent empty branch commits.")
-        raise ValueError("DataIngestionError: Active portfolio validation array is null.")
+        print("❌ CRITICAL ERROR: Live Yahoo Sports crawler returned 0 scheduled games.")
+        print("🛑 Disengaging pipeline to prevent empty database commits.")
+        raise ValueError("DataIngestionError: Active portfolio validation array tracks null.")
 
     engine = WPIRawEngine()
     raw_results = []
@@ -282,13 +289,12 @@ def process_portfolio_data(portfolio, today_str):
         final_df["P_Market"] = final_df.apply(lambda r: f"{r['P_Market']*100:.1f}%" if r["Alpha_Edge"] != -99.0 else "FILTERED", axis=1)
         final_df["Alpha_Edge"] = final_df.apply(lambda r: f"{r['Alpha_Edge']*100:+.1f}%" if r["Alpha_Edge"] != -99.0 else "BLOCKED", axis=1)
 
-    # 💾 PERSISTENT APPEND EXPORT MODULE (mode='a')
-    output_file = "alpha_market_matrix.csv"
-    file_exists = os.path.isfile(output_file)
-    
-    if not final_df.empty:
+        # 💾 PERSISTENT APPEND EXPORT MODULE (mode='a')
+        output_file = "alpha_market_matrix.csv"
+        file_exists = os.path.isfile(output_file)
+        
         final_df.to_csv(output_file, mode='a', index=False, header=not file_exists)
-        print(f"📊 SUCCESS! Appended {len(final_df)} streamlined API probability entries to '{output_file}'.")
+        print(f"📊 SUCCESS! Appended {len(final_df)} streamlined Yahoo probability entries to '{output_file}'.")
     else:
         print("⚠️ Pipeline alert: Calculated matrix returned empty. Data append skipped.")
 
