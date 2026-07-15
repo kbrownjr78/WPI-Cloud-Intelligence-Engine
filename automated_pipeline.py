@@ -151,26 +151,24 @@ class WPIRawEngine:
                 engine = WPIRawEngine()
                 raw_results = []
 
-        for match in portfolio:
-            p_wpi, p_market, alpha, status = engine.run_simulation(
-                match["Sport"], match["Home"], match["Away"], match["Target"],
-                match["Home_M"], match["Away_M"], match["Env"], 
-                match["Odds"], match["Value"], match["Type"]
-            )
-            
-            if status == "SUCCESS":
-                raw_results.append({
-                    "Date": today_str, "League": match["League"], "Matchup": f"{match['Home']} vs {match['Away']}",
-                    "Target_Selection": match["Target"], "Market_Odds": match["Odds"], "Market_Type": match["Type"].upper(),
-                    "P_WPI": p_wpi, "P_Market": p_market, "Alpha_Edge": alpha
-                })
-            else:
-                raw_results.append({
-                    "Date": today_str, "League": match["League"], "Matchup": f"{match['Home']} vs {match['Away']}",
-                    "Target_Selection": match["Target"], "Market_Odds": match["Odds"], "Market_Type": match["Type"].upper(),
-                    "P_WPI": 0.0, "P_Market": 0.0, "Alpha_Edge": -99.0, "Notes": status
-                })
-
+for match in portfolio:
+    p_wpi, p_market, alpha, status = engine.run_simulation(
+        match["Sport"], match["Home"], match["Away"], match["Target"],
+        match["Home_M"], match["Away_M"], match["Env"], 
+        match["Odds"], match["Value"], match["Type"]
+    )          
+    if status == "SUCCESS":
+        raw_results.append({
+            "Date": today_str, "League": match["League"], "Matchup": f"{match['Home']} vs {match['Away']}",
+            "Target_Selection": match["Target"], "Market_Odds": match["Odds"], "Market_Type": match["Type"].upper(),
+            "P_WPI": p_wpi, "P_Market": p_market, "Alpha_Edge": alpha
+        })
+    else:
+        raw_results.append({
+            "Date": today_str, "League": match["League"], "Matchup": f"{match['Home']} vs {match['Away']}",
+            "Target_Selection": match["Target"], "Market_Odds": match["Odds"], "Market_Type": match["Type"].upper(),
+            "P_WPI": 0.0, "P_Market": 0.0, "Alpha_Edge": -99.0, "Notes": status
+        })
         df_active = pd.DataFrame([r for r in raw_results if r.get("Alpha_Edge", -99.0) != -99.0])
         df_filtered = pd.DataFrame([r for r in raw_results if r.get("Alpha_Edge", -99.0) == -99.0])
         
