@@ -1,7 +1,7 @@
 """
-WPI Quantitative Sports Engine (v19.0 - SportsDataverse API Circuit)
+WPI Quantitative Sports Engine (v19.5 - Sovereign SportsDataverse Circuit)
 File Name: automated_pipeline.py
-Chunk 1 of 4: System Dependencies, Framework Setup, and Hard Market Filters
+Chunk 1 of 4: System Dependencies, Initialization Layer, and Core Mechanics
 """
 
 import os
@@ -174,59 +174,60 @@ class WPIRawEngine:
 def run_cloud_pipeline():
     print("🛰️ Connecting to SportsDataverse Open-Source REST Infrastructure...")
     today_str = datetime.now().strftime("%Y-%m-%d")
-    date_numeric = datetime.now().strftime("%Y%m%d") # Format configuration required for SDV endpoints
     portfolio = []
     
-    # SportsDataverse centralized repository endpoint definitions
+    # Restructured stable SportsDataverse data architecture endpoints
     sdv_endpoints = [
-        {"sport": "mlb", "url": f"https://espn.com{date_numeric}"},
-        {"sport": "basketball", "url": f"https://espn.com{date_numeric}"},
-        {"sport": "soccer", "url": f"https://espn.com{date_numeric}"}
+        {"sport": "mlb", "url": "https://sportsdataverse.org"},
+        {"sport": "basketball", "url": "https://sportsdataverse.org"},
+        {"sport": "soccer", "url": "https://sportsdataverse.org"}
     ]
     
     for target in sdv_endpoints:
         try:
             sport_type = target["sport"]
-            print(f"🔗 Polling SportsDataverse Node: {sport_type.upper()} for data loop sequence...")
-            response = requests.get(target["url"], headers={"User-Agent": "SportsDataverse-Python-Wrapper"}, timeout=12)
+            print(f"🔗 Polling SportsDataverse Node: {sport_type.upper()} for daily match tracks...")
+            response = requests.get(target["url"], headers={"User-Agent": "WPI-Quant-Engine-v19.5"}, timeout=12)
             
             if response.status_code == 200:
                 json_data = response.json()
-                events = json_data.get("events", [])
-                league_name = json_data.get("leagues", [{}])[0].get("name", "SportsDataverse Matrix Circuit")
+                # Parse localized event mappings safely from structural response trees
+                events = json_data.get("games", json_data.get("events", json_data.get("response", [])))
+                league_name = json_data.get("league", {}).get("name", f"SportsDataverse {sport_type.upper()} Circuit")
                 print(f"📊 Isolated network arrays. Extracted {len(events)} active events.")
                 
                 for event in events:
                     try:
-                        competitions = event.get("competitions", [{}])[0]
-                        competitors = competitions.get("competitors", [])
+                        home_team = event.get("home_team", event.get("home", {}).get("name"))
+                        away_team = event.get("away_team", event.get("away", {}).get("name"))
                         
-                        home_item = next((c for c in competitors if c.get("homeAway") == "home"), None)
-                        away_item = next((c for c in competitors if c.get("homeAway") == "away"), None)
+                        # Handle potential sub-nested team naming variants across different sport nodes
+                        if not home_team and "competitions" in event:
+                            competitors = event["competitions"][0].get("competitors", [])
+                            home_item = next((c for c in competitors if c.get("homeAway") == "home"), None)
+                            away_item = next((c for c in competitors if c.get("homeAway") == "away"), None)
+                            home_team = home_item.get("team", {}).get("displayName") if home_item else None
+                            away_team = away_item.get("team", {}).get('displayName') if away_item else None
                         
-                        if home_item and away_item:
-                            home_team = home_item.get("team", {}).get("displayName")
-                            away_team = away_item.get('team', {}).get('displayName')
-                            
-                            if home_team and away_team:
-                                if sport_type == "basketball":
-                                    sport, m_type, odds, val = "basketball", "moneyline", -160, None
-                                    home_m = {'xg_adjusted': 1.12, 'sot_surge': 0.05, 'league_scalar': 1.08, 'xga_adjusted': 0.96, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.06, 'form_def_delta': -0.02, 'rest_hours': 72, 'travel_friction': 0.0}
-                                    away_m = {'xg_adjusted': 0.98, 'sot_surge': 0.02, 'league_scalar': 1.08, 'xga_adjusted': 1.10, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': -0.02, 'form_def_delta': 0.04, 'rest_hours': 48, 'travel_friction': 0.4}
-                                elif sport_type == "mlb":
-                                    sport, m_type, odds, val = "mlb", "f5", -110, None
-                                    home_m = {'starter_fip': 3.42, 'bullpen_xfip': 3.85, 'woba_vs_hand': 0.334, 'runs_per_inning': 0.52}
-                                    away_m = {'starter_fip': 4.12, 'bullpen_xfip': 4.22, 'woba_vs_hand': 0.312, 'runs_per_inning': 0.48}
-                                else:
-                                    sport, m_type, odds, val = "soccer", "moneyline", -110, None
-                                    home_m = {'xg_adjusted': 1.85, 'sot_surge': 0.14, 'league_scalar': 1.0, 'xga_adjusted': 0.78, 'ppda': 8.2, 'clearance_factor': 1.15, 'form_xg_delta': 0.22, 'form_def_delta': -0.11, 'rest_hours': 96, 'travel_friction': 0.1}
-                                    away_m = {'xg_adjusted': 1.62, 'sot_surge': 0.08, 'league_scalar': 1.0, 'xga_adjusted': 1.12, 'ppda': 10.5, 'clearance_factor': 0.95, 'form_xg_delta': -0.05, 'form_def_delta': 0.18, 'rest_hours': 72, 'travel_friction': 0.3}
+                        if home_team and away_team and home_team != away_team:
+                            if sport_type == "basketball":
+                                sport, m_type, odds, val = "basketball", "moneyline", -160, None
+                                home_m = {'xg_adjusted': 1.12, 'sot_surge': 0.05, 'league_scalar': 1.08, 'xga_adjusted': 0.96, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.06, 'form_def_delta': -0.02, 'rest_hours': 72, 'travel_friction': 0.0}
+                                away_m = {'xg_adjusted': 0.98, 'sot_surge': 0.02, 'league_scalar': 1.08, 'xga_adjusted': 1.10, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': -0.02, 'form_def_delta': 0.04, 'rest_hours': 48, 'travel_friction': 0.4}
+                            elif sport_type == "mlb":
+                                sport, m_type, odds, val = "mlb", "f5", -110, None
+                                home_m = {'starter_fip': 3.42, 'bullpen_xfip': 3.85, 'woba_vs_hand': 0.334, 'runs_per_inning': 0.52}
+                                away_m = {'starter_fip': 4.12, 'bullpen_xfip': 4.22, 'woba_vs_hand': 0.312, 'runs_per_inning': 0.48}
+                            else:
+                                sport, m_type, odds, val = "soccer", "moneyline", -110, None
+                                home_m = {'xg_adjusted': 1.85, 'sot_surge': 0.14, 'league_scalar': 1.0, 'xga_adjusted': 0.78, 'ppda': 8.2, 'clearance_factor': 1.15, 'form_xg_delta': 0.22, 'form_def_delta': -0.11, 'rest_hours': 96, 'travel_friction': 0.1}
+                                away_m = {'xg_adjusted': 1.62, 'sot_surge': 0.08, 'league_scalar': 1.0, 'xga_adjusted': 1.12, 'ppda': 10.5, 'clearance_factor': 0.95, 'form_xg_delta': -0.05, 'form_def_delta': 0.18, 'rest_hours': 72, 'travel_friction': 0.3}
 
-                                portfolio.append({
-                                    "Sport": sport, "League": league_name, "Home": home_team, "Away": away_team,
-                                    "Target": f"{home_team} ML", "Odds": odds, "Type": m_type, "Value": val,
-                                    "Home_M": home_m, "Away_M": away_m, "Env": {'temp': 74, 'humidity': 55, 'venue_index': 1.02, 'surface': 'clay', 'park_factor': 1.00}
-                                })
+                            portfolio.append({
+                                "Sport": sport, "League": league_name, "Home": home_team, "Away": away_team,
+                                "Target": f"{home_team} ML", "Odds": odds, "Type": m_type, "Value": val,
+                                "Home_M": home_m, "Away_M": away_m, "Env": {'temp': 74, 'humidity': 55, 'venue_index': 1.02, 'surface': 'clay', 'park_factor': 1.00}
+                            })
                     except Exception: continue
         except Exception: continue
 
