@@ -2,46 +2,50 @@ name: WPI Free Automated Cloud Scraper and Engine
 
 on:
   schedule:
-    - cron: '0 07 * * *' # Runs daily at 7:00 AM UTC
-  workflow_dispatch: # Allows manual trigger
+    - cron: '0 07 * * *' # Runs daily at 7:00 AM UTC (3:00 AM ET)
+  workflow_dispatch: # Allows manual trigger via the GitHub Actions UI button
 
 jobs:
   execute-pipeline:
-    runs-on: ubuntu-latest # Free Linux container
-        steps:
-    # Step 1: Clone your repository files from the GitHub cloud onto the virtual server
-    - name: Checkout Repository Workspace
-      uses: actions/checkout@v4
+    runs-on: ubuntu-latest # Free Linux container provided by GitHub
 
-    # Step 2: Provision a clean Python 3.10 architecture on the virtual machine
-    - name: Set Up Cloud Python Runtime
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-        cache: 'pip' # Automatically caches packages to speed up daily runs
+    permissions:
+      contents: write # Grants the server critical write permissions to update files in your repository
 
-    # Step 3: Install a real, stable Google Chrome browser onto the Linux system for Selenium to use
-    - name: Deploy Google Chrome Virtual Architecture
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y google-chrome-stable
+    steps:
+      # Step 1: Clone your repository files from the GitHub cloud onto the virtual server
+      - name: Checkout Repository Workspace
+        uses: actions/checkout@v4
 
-    # Step 4: Install all the libraries listed in your requirements.txt file (numpy, selenium, pandas)
-    - name: Install Python Package Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+      # Step 2: Provision a clean Python 3.10 architecture on the virtual machine
+      - name: Set Up Cloud Python Runtime
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip' # Automatically caches packages to speed up daily runs
 
-    # Step 5: Execute your script to scrape today's games and run the 100,000-iteration Monte Carlo loops
-    - name: Run Scraper and Compute Monte Carlo Model
-      run: python automated_pipeline.py
+      # Step 3: Install a real, stable Google Chrome browser onto the Linux system for Selenium to use
+      - name: Deploy Google Chrome Virtual Architecture
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
 
-    # Step 6: Use internal Git commands to push the newly created 'alpha_market_matrix.csv' back to your repository
-    - name: Commit Generated Alpha Matrix to GitHub Repository
-      run: |
-        git config --global user.name "WPI Quant Bot"
-        git config --global user.email "quant-bot@github.com"
-        git add alpha_market_matrix.csv
-        # The line below safely checks if there are changes; if not, it exits without failing the script
-        git commit -m "Data Engine Synchronization: Updated Real-Time Alpha Projections [skip ci]" || echo "No pipeline matrix changes detected."
-        git push
+      # Step 4: Install all the libraries listed in your requirements.txt file (numpy, selenium, pandas)
+      - name: Install Python Package Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Step 5: Execute your script to scrape today's games and run the 100,000-iteration Monte Carlo loops
+      - name: Run Scraper and Compute Monte Carlo Model
+        run: python automated_pipeline.py
+
+      # Step 6: Use internal Git commands to push the newly created 'alpha_market_matrix.csv' back to your repository
+      - name: Commit Generated Alpha Matrix to GitHub Repository
+        run: |
+          git config --global user.name "WPI Quant Bot"
+          git config --global user.email "quant-bot@github.com"
+          git add alpha_market_matrix.csv
+          # Safely checks if there are data changes; if not, it exits without failing the script run
+          git commit -m "Data Engine Synchronization: Updated Real-Time Alpha Projections [skip ci]" || echo "No pipeline matrix changes detected."
+          git push
