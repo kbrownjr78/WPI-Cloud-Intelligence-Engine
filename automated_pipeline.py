@@ -1,5 +1,5 @@
 """
-WPI Quantitative Sports Engine (v7.5 - Autonomous Cross-Sport Integration Circuit)
+WPI Quantitative Sports Engine (v8.0 - Streamlined Probability Architecture)
 File Name: automated_pipeline.py
 Chunk 1 of 3: System Dependencies, Math Tools, and Hard-Market Verification Filters
 """
@@ -132,13 +132,11 @@ def run_cloud_pipeline():
         html_content = driver.page_source
         soup = BeautifulSoup(html_content, 'html.parser')
         
-        # Scrapes all functional game element container wrappers visible on the day of execution
         game_modules = soup.find_all('div', {'class': lambda x: x and ('game-card' in x or 'match-container' in x or 'schedule-contents' in x)})
         print(f"📊 Extracted HTML fragments. Parsing {len(game_modules)} potential dynamic sport targets.")
         
         for game in game_modules:
             try:
-                # Dynamic text string token extractions from the website container
                 sport_label = game.get('data-sport', 'soccer')
                 home_team = game.find('span', {'class': lambda x: x and 'team-name' in x or 'home' in x}).text.strip()
                 away_team = game.find('span', {'class': lambda x: x and 'team-name' in x or 'away' in x}).text.strip()
@@ -146,7 +144,6 @@ def run_cloud_pipeline():
                 league_name = league_node.text.strip() if league_node else "Global Pro Circuit"
                 
                 if home_team and away_team:
-                    # Pure Data Science Decoupling: Assigns equations dynamically based on sport labels found
                     if 'wnba' in league_name.lower() or 'basketball' in sport_label.lower() or 'nba' in league_name.lower():
                         sport, m_type, odds, val = "basketball", "moneyline", -160, None
                         home_m = {'xg_adjusted': 1.12, 'sot_surge': 0.05, 'league_scalar': 1.08, 'xga_adjusted': 0.96, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.06, 'form_def_delta': -0.02, 'rest_hours': 72, 'travel_friction': 0.0}
@@ -156,7 +153,6 @@ def run_cloud_pipeline():
                         home_m = {'elo_surface': {'clay': 1950}, 'dominance_ratio': 1.21, 'hold_pct': 0.86, 'break_pct': 0.28, 'first_serve_pct': 0.67, 'first_serve_pts_won': 0.76, 'games_played_72h': 18, 'rest_hours': 48}
                         away_m = {'elo_surface': {'clay': 1780}, 'dominance_ratio': 1.04, 'hold_pct': 0.84, 'break_pct': 0.18, 'first_serve_pct': 0.61, 'first_serve_pts_won': 0.72, 'games_played_72h': 24, 'rest_hours': 24}
                     else: 
-                        # Default structural routing defaults to the Soccer module equation footprint
                         sport, m_type, odds, val = "soccer", "to_qualify", -120, None
                         home_m = {'xg_adjusted': 1.85, 'sot_surge': 0.14, 'league_scalar': 1.0, 'xga_adjusted': 0.78, 'ppda': 8.2, 'clearance_factor': 1.15, 'form_xg_delta': 0.22, 'form_def_delta': -0.11, 'rest_hours': 96, 'travel_friction': 0.1}
                         away_m = {'xg_adjusted': 1.62, 'sot_surge': 0.08, 'league_scalar': 1.0, 'xga_adjusted': 1.12, 'ppda': 10.5, 'clearance_factor': 0.95, 'form_xg_delta': -0.05, 'form_def_delta': 0.18, 'rest_hours': 72, 'travel_friction': 0.3}
@@ -203,19 +199,16 @@ def run_cloud_pipeline():
                     "P_WPI": 0.0, "P_Market": 0.0, "Alpha_Edge": -99.0, "Notes": status
                 })
 
-        # 🗂️ DUAL-OPTIMIZATION MULTI-RANKING SORT FILTERS
+        # 🗂️ STREAMLINED SORTING FILTER (REMOVED EXPECTED VALUE LOGIC)
         df_active = pd.DataFrame([r for r in raw_results if r.get("Alpha_Edge", -99.0) != -99.0])
         df_filtered = pd.DataFrame([r for r in raw_results if r.get("Alpha_Edge", -99.0) == -99.0])
         
-        # Portfolio Alpha: Top 10 Ranked by Simulated True Probability
+        # Portfolio Alpha: Extract exactly the Top 10 rows by Simulated True Probability
         rank_prob = df_active.sort_values(by="P_WPI", ascending=False).head(10).copy()
         rank_prob["Optimization_Category"] = "TOP_10_PROBABILITY"
-        
-        # Portfolio Beta: Top 5 Ranked by Raw Expected Value Delta (EV / Alpha)
-        rank_ev = df_active.sort_values(by="Alpha_Edge", ascending=False).head(5).copy()
-        rank_ev["Optimization_Category"] = "TOP_5_EXPECTED_VALUE"
 
-        final_df = pd.concat([rank_prob, rank_ev, df_filtered], ignore_index=True)
+        # Concatenate streamlined arrays together
+        final_df = pd.concat([rank_prob, df_filtered], ignore_index=True)
         
         if not final_df.empty:
             final_df["P_WPI"] = final_df.apply(lambda r: f"{r['P_WPI']*100:.1f}%" if r["Alpha_Edge"] != -99.0 else "FILTERED", axis=1)
@@ -228,7 +221,7 @@ def run_cloud_pipeline():
         
         if not final_df.empty:
             final_df.to_csv(output_file, mode='a', index=False, header=not file_exists)
-            print(f"📊 SUCCESS! Appended {len(final_df)} new multi-sport simulated entries to '{output_file}'.")
+            print(f"📊 SUCCESS! Appended {len(final_df)} streamlined probability entries to '{output_file}'.")
         else:
             print("⚠️ Pipeline alert: Calculated matrix returned empty. Data append skipped.")
         
