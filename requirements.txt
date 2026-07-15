@@ -1,4 +1,5 @@
 numpy
+pandas
 selenium
 webdriver-manager
-pandas
+beautifulsoup4
