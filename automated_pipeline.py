@@ -1,5 +1,5 @@
 """
-WPI Quantitative Sports Engine (v8.0 - Streamlined Probability Architecture)
+WPI Quantitative Sports Engine (v10.0 - Pure Real-Time Architecture)
 File Name: automated_pipeline.py
 Chunk 1 of 3: System Dependencies, Math Tools, and Hard-Market Verification Filters
 """
@@ -20,7 +20,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 class WPIRawEngine:
     def __init__(self):
-        print("⚡ WPI Multi-Sport Engine Active. Calibrating cross-sport parameter arrays...")
+        print("⚡ WPI Engine Core Active. Initializing raw mathematical matrices...")
 
     def sigmoid(self, x):
         """Standard logistic sigmoid function compressing interaction tokens between 0 and 1."""
@@ -56,7 +56,6 @@ class WPIRawEngine:
             return None, None, None, f"FILTERED: {msg}"
 
         if sport.lower() == 'tennis':
-            # Court Dominance Operator (CDO) implementation for Tennis Module
             elo_a = home_metrics['elo_surface']['clay']
             elo_b = away_metrics['elo_surface']['clay']
             serve_eff_a = home_metrics['first_serve_pct'] * home_metrics['first_serve_pts_won']
@@ -76,7 +75,6 @@ class WPIRawEngine:
             sim_b = np.random.normal(expected_away, 0.15, iterations)
             p_wpi = np.sum(sim_a > sim_b) / iterations
         else:
-            # Equations 2 & 3: Standard Offensive/Defensive Interaction Setup for Field/Court Sports
             home_oi = home_metrics['xg_adjusted'] * (1 + home_metrics['sot_surge']) * home_metrics['league_scalar'] * 0.65
             away_oi = away_metrics['xg_adjusted'] * (1 + away_metrics['sot_surge']) * away_metrics['league_scalar'] * 0.65
             home_di = home_metrics['xga_adjusted'] * (home_metrics['ppda'] * home_metrics['clearance_factor']) * 1.14 * home_metrics['league_scalar']
@@ -111,7 +109,7 @@ class WPIRawEngine:
         return p_wpi, p_market, alpha_edge, "SUCCESS"
 
 def run_cloud_pipeline():
-    print("🛰️ Booting Multi-Sport Headless Chrome Scraper Node...")
+    print("🛰️ Booting Headless Chrome Scraper Node targeting ESPN...")
     chrome_options = Options()
     chrome_options.add_argument("--headless=new") 
     chrome_options.add_argument("--no-sandbox")
@@ -124,26 +122,25 @@ def run_cloud_pipeline():
     portfolio = []
     
     try:
-        # 🌐 GLOBAL CROSS-SPORT SCHEDULE INGESTION CIRCUIT
-        print("🔗 Crawling Yahoo Sports cross-platform database hubs...")
-        driver.get("https://yahoo.com")
+        print("🔗 Crawling live ESPN Scoreboard feeds...")
+        driver.get("https://espn.com")
         time.sleep(6) 
         
         html_content = driver.page_source
         soup = BeautifulSoup(html_content, 'html.parser')
         
-        game_modules = soup.find_all('div', {'class': lambda x: x and ('game-card' in x or 'match-container' in x or 'schedule-contents' in x)})
-        print(f"📊 Extracted HTML fragments. Parsing {len(game_modules)} potential dynamic sport targets.")
+        game_modules = soup.find_all('article', {'class': lambda x: x and ('scoreboard' in x or 'game' in x or 'competitor' in x)})
+        print(f"📊 Parsing DOM elements. Found {len(game_modules)} raw live event blocks.")
         
         for game in game_modules:
             try:
                 sport_label = game.get('data-sport', 'soccer')
-                home_team = game.find('span', {'class': lambda x: x and 'team-name' in x or 'home' in x}).text.strip()
-                away_team = game.find('span', {'class': lambda x: x and 'team-name' in x or 'away' in x}).text.strip()
-                league_node = game.find('span', {'class': lambda x: x and 'league' in x or 'title' in x})
-                league_name = league_node.text.strip() if league_node else "Global Pro Circuit"
+                home_team = game.find('div', {'class': lambda x: x and 'team-name' in x or 'home' in x or 'away' in x}).text.strip()
+                away_team = game.find_next('div', {'class': lambda x: x and 'team-name' in x or 'home' in x or 'away' in x}).text.strip()
+                league_node = game.find('div', {'class': lambda x: x and 'league' in x or 'header' in x})
+                league_name = league_node.text.strip() if league_node else "ESPN Pro Circuit"
                 
-                if home_team and away_team:
+                if home_team and away_team and home_team != away_team:
                     if 'wnba' in league_name.lower() or 'basketball' in sport_label.lower() or 'nba' in league_name.lower():
                         sport, m_type, odds, val = "basketball", "moneyline", -160, None
                         home_m = {'xg_adjusted': 1.12, 'sot_surge': 0.05, 'league_scalar': 1.08, 'xga_adjusted': 0.96, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.06, 'form_def_delta': -0.02, 'rest_hours': 72, 'travel_friction': 0.0}
@@ -164,16 +161,11 @@ def run_cloud_pipeline():
                     })
             except Exception:
                 continue
-        # Safeguard sequence: If the live web crawler faced zero length returns due to layout updates, 
-        # load a dynamically verified cross-sport portfolio array to keep database transactions alive
-        if not portfolio:
-            print("⚠️ Dynamic schedule grid parsing encountered a website sync timeout. Loading backup matrix...")
-            portfolio = [
-                {"Sport": "tennis", "League": "ATP Gstaad Circuit", "Home": "Stefanos Tsitsipas", "Away": "Jan-Lennard Struff", "Target": "Tsitsipas Match Winner", "Odds": -155, "Type": "moneyline", "Value": None, "Home_M": {'elo_surface': {'clay': 1950}, 'dominance_ratio': 1.21, 'hold_pct': 0.86, 'break_pct': 0.28, 'first_serve_pct': 0.67, 'first_serve_pts_won': 0.76, 'games_played_72h': 18, 'rest_hours': 48}, "Away_M": {'elo_surface': {'clay': 1780}, 'dominance_ratio': 1.04, 'hold_pct': 0.84, 'break_pct': 0.18, 'first_serve_pct': 0.61, 'first_serve_pts_won': 0.72, 'games_played_72h': 24, 'rest_hours': 24}, "Env": {'surface': 'clay'}},
-                {"Sport": "soccer", "League": "FIFA World Cup", "Home": "Argentina", "Away": "England", "Target": "Argentina To Qualify", "Odds": -120, "Type": "to_qualify", "Value": None, "Home_M": {'xg_adjusted': 1.85, 'sot_surge': 0.14, 'league_scalar': 1.0, 'xga_adjusted': 0.78, 'ppda': 8.2, 'clearance_factor': 1.15, 'form_xg_delta': 0.22, 'form_def_delta': -0.11, 'rest_hours': 96, 'travel_friction': 0.1}, "Away_M": {'xg_adjusted': 1.62, 'sot_surge': 0.08, 'league_scalar': 1.0, 'xga_adjusted': 1.12, 'ppda': 10.5, 'clearance_factor': 0.95, 'form_xg_delta': -0.05, 'form_def_delta': 0.18, 'rest_hours': 72, 'travel_friction': 0.3}, "Env": {'temp': 78, 'humidity': 62, 'venue_index': 1.05}},
-                {"Sport": "basketball", "League": "WNBA Pro", "Home": "Minnesota Lynx", "Away": "LA Sparks", "Target": "Minnesota Lynx ML", "Odds": -160, "Type": "moneyline", "Value": None, "Home_M": {'xg_adjusted': 1.15, 'sot_surge': 0.06, 'league_scalar': 1.08, 'xga_adjusted': 0.94, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.08, 'form_def_delta': -0.04, 'rest_hours': 72, 'travel_friction': 0.0}, "Away_M": {'xg_adjusted': 0.96, 'sot_surge': 0.01, 'league_scalar': 1.08, 'xga_adjusted': 1.12, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': -0.04, 'form_def_delta': 0.06, 'rest_hours': 48, 'travel_friction': 0.4}, "Env": {'temp': 72, 'humidity': 45, 'venue_index': 1.00}},
-                {"Sport": "basketball", "League": "WNBA Pro", "Home": "Indiana Fever", "Away": "GS Valkyries", "Target": "Indiana Fever ML", "Odds": -115, "Type": "moneyline", "Value": None, "Home_M": {'xg_adjusted': 1.10, 'sot_surge': 0.05, 'league_scalar': 1.08, 'xga_adjusted': 1.05, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.05, 'form_def_delta': 0.02, 'rest_hours': 48, 'travel_friction': 0.0}, "Away_M": {'xg_adjusted': 1.02, 'sot_surge': 0.03, 'league_scalar': 1.08, 'xga_adjusted': 1.08, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.01, 'form_def_delta': 0.05, 'rest_hours': 48, 'travel_friction': 0.2}, "Env": {'temp': 72, 'humidity': 45, 'venue_index': 1.00}}
-            ]
+        # Strict Real-Time Data Constraint Check (Static Backup Payload Extinguished)
+        if len(portfolio) == 0:
+            print("❌ CRITICAL ERROR: Live ESPN data nodes returned 0 scheduled games.")
+            print("🛑 Disengaging workflow tracker to prevent blank database commits.")
+            raise ValueError("DataIngestionError: Live portfolio execution shape is null.")
 
         engine = WPIRawEngine()
         raw_results = []
@@ -199,11 +191,11 @@ def run_cloud_pipeline():
                     "P_WPI": 0.0, "P_Market": 0.0, "Alpha_Edge": -99.0, "Notes": status
                 })
 
-        # 🗂️ STREAMLINED SORTING FILTER (REMOVED EXPECTED VALUE LOGIC)
+        # 🗂️ STREAMLINED SORTING FILTER
         df_active = pd.DataFrame([r for r in raw_results if r.get("Alpha_Edge", -99.0) != -99.0])
         df_filtered = pd.DataFrame([r for r in raw_results if r.get("Alpha_Edge", -99.0) == -99.0])
         
-        # Portfolio Alpha: Extract exactly the Top 10 rows by Simulated True Probability
+        # Portfolio Group: Extract exactly the Top 10 rows by Simulated True Probability
         rank_prob = df_active.sort_values(by="P_WPI", ascending=False).head(10).copy()
         rank_prob["Optimization_Category"] = "TOP_10_PROBABILITY"
 
@@ -221,7 +213,7 @@ def run_cloud_pipeline():
         
         if not final_df.empty:
             final_df.to_csv(output_file, mode='a', index=False, header=not file_exists)
-            print(f"📊 SUCCESS! Appended {len(final_df)} streamlined probability entries to '{output_file}'.")
+            print(f"📊 SUCCESS! Appended {len(final_df)} new live ESPN probability entries to '{output_file}'.")
         else:
             print("⚠️ Pipeline alert: Calculated matrix returned empty. Data append skipped.")
         
