@@ -1,0 +1,11 @@
+name: WPI Free Automated Cloud Scraper and Engine
+on:
+  schedule:
+    - cron: '0 07 * * *' # Runs daily at 7:00 AM UTC
+  workflow_dispatch: # Allows manual trigger
+jobs:
+  execute-pipeline:
+    runs-on: ubuntu-latest # Free Linux container
+    steps:
+      # ... (checkout, python setup, chrome installation, script execution)
+      # ... (steps for committing the output CSV 'alpha_market_matrix.csv')
