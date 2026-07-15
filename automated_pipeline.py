@@ -1,5 +1,5 @@
 """
-WPI Quantitative Sports Engine (v13.0 - High-Stability API Ingestion Circuit)
+WPI Quantitative Sports Engine (v13.5 - High-Stability API Ingestion Circuit)
 File Name: automated_pipeline.py
 Chunk 1 of 4: System Dependencies, Initialization Layer, and Core Mechanics
 """
@@ -189,7 +189,8 @@ def run_cloud_pipeline():
         try:
             print(f"🔗 Requesting clean schedule arrays from ESPN {sport_key.upper()} backend...")
             response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
-            if response.status_code != 200: continue
+            if response.status_code != 200: 
+                continue
             data = response.json()
             events = data.get('events', [])
             
@@ -227,67 +228,69 @@ def run_cloud_pipeline():
                                 "Target": f"{home_team} Clean Line", "Odds": odds, "Type": m_type, "Value": val,
                                 "Home_M": home_m, "Away_M": away_m, "Env": {'temp': 74, 'humidity': 55, 'venue_index': 1.02, 'surface': 'clay', 'park_factor': 1.00}
                             })
-                except Exception: continue
-        except Exception: continue
-        # Strict Real-Time Data Constraint Check (Zero Fixed Placeholders Permitted)
-        if len(portfolio) == 0:
-            print("❌ CRITICAL ERROR: Live API data nodes returned 0 scheduled games.")
-            print("🛑 Disengaging pipeline to prevent empty branch commits.")
-            raise ValueError("DataIngestionError: Active portfolio validation array is null.")
+                except Exception: 
+                    continue
+        except Exception: 
+            continue
 
-        engine = WPIRawEngine()
-        raw_results = []
-        
-        print(f"🚀 Running 100,000-loop multi-sport randomizations across all {len(portfolio)} active items...")
-        for match in portfolio:
-            p_wpi, p_market, alpha, status = engine.run_simulation(
-                match["Sport"], match["Home"], match["Away"], match["Target"],
-                match["Home_M"], match["Away_M"], match["Env"], 
-                match["Odds"], match["Value"], match["Type"]
-            )
-            
-            if status == "SUCCESS":
-                raw_results.append({
-                    "Date": today_str, "League": match["League"], "Matchup": f"{match['Home']} vs {match['Away']}",
-                    "Target_Selection": match["Target"], "Market_Odds": match["Odds"], "Market_Type": match["Type"].upper(),
-                    "P_WPI": p_wpi, "P_Market": p_market, "Alpha_Edge": alpha
-                })
-            else:
-                raw_results.append({
-                    "Date": today_str, "League": match["League"], "Matchup": f"{match['Home']} vs {match['Away']}",
-                    "Target_Selection": match["Target"], "Market_Odds": match["Odds"], "Market_Type": match["Type"].upper(),
-                    "P_WPI": 0.0, "P_Market": 0.0, "Alpha_Edge": -99.0, "Notes": status
-                })
+    # Transmit acquired portfolio array elements directly to the analytics engine layer
+    process_portfolio_data(portfolio, today_str)
+def process_portfolio_data(portfolio, today_str):
+    """Processes simulations independently outside the network request block to preserve layout indenting."""
+    if len(portfolio) == 0:
+        print("❌ CRITICAL ERROR: Live API data nodes returned 0 scheduled games.")
+        print("🛑 Disengaging pipeline to prevent empty branch commits.")
+        raise ValueError("DataIngestionError: Active portfolio validation array is null.")
 
-        # 🗂️ STREAMLINED PROBABILITY MATRICES SORTING
-        df_active = pd.DataFrame([r for r in raw_results if r.get("Alpha_Edge", -99.0) != -99.0])
-        df_filtered = pd.DataFrame([r for r in raw_results if r.get("Alpha_Edge", -99.0) == -99.0])
+    engine = WPIRawEngine()
+    raw_results = []
+    
+    print(f"🚀 Running 100,000-loop multi-sport randomizations across all {len(portfolio)} active items...")
+    for match in portfolio:
+        p_wpi, p_market, alpha, status = engine.run_simulation(
+            match["Sport"], match["Home"], match["Away"], match["Target"],
+            match["Home_M"], match["Away_M"], match["Env"], 
+            match["Odds"], match["Value"], match["Type"]
+        )
         
-        # Portfolio Group: Extract exactly the Top 10 rows by Simulated True Probability
-        rank_prob = df_active.sort_values(by="P_WPI", ascending=False).head(10).copy()
-        rank_prob["Optimization_Category"] = "TOP_10_PROBABILITY"
-
-        # Concatenate streamlined arrays together
-        final_df = pd.concat([rank_prob, df_filtered], ignore_index=True)
-        
-        if not final_df.empty:
-            final_df["P_WPI"] = final_df.apply(lambda r: f"{r['P_WPI']*100:.1f}%" if r["Alpha_Edge"] != -99.0 else "FILTERED", axis=1)
-            final_df["P_Market"] = final_df.apply(lambda r: f"{r['P_Market']*100:.1f}%" if r["Alpha_Edge"] != -99.0 else "FILTERED", axis=1)
-            final_df["Alpha_Edge"] = final_df.apply(lambda r: f"{r['Alpha_Edge']*100:+.1f}%" if r["Alpha_Edge"] != -99.0 else "BLOCKED", axis=1)
-
-        # 💾 PERSISTENT APPEND EXPORT MODULE (mode='a')
-        output_file = "alpha_market_matrix.csv"
-        file_exists = os.path.isfile(output_file)
-        
-        if not final_df.empty:
-            final_df.to_csv(output_file, mode='a', index=False, header=not file_exists)
-            print(f"📊 SUCCESS! Appended {len(final_df)} streamlined API probability entries to '{output_file}'.")
+        if status == "SUCCESS":
+            raw_results.append({
+                "Date": today_str, "League": match["League"], "Matchup": f"{match['Home']} vs {match['Away']}",
+                "Target_Selection": match["Target"], "Market_Odds": match["Odds"], "Market_Type": match["Type"].upper(),
+                "P_WPI": p_wpi, "P_Market": p_market, "Alpha_Edge": alpha
+            })
         else:
-            print("⚠️ Pipeline alert: Calculated matrix returned empty. Data append skipped.")
-        
-    except Exception as e:
-        print(f"❌ Critical Pipeline Failure: {str(e)}")
-        raise e
+            raw_results.append({
+                "Date": today_str, "League": match["League"], "Matchup": f"{match['Home']} vs {match['Away']}",
+                "Target_Selection": match["Target"], "Market_Odds": match["Odds"], "Market_Type": match["Type"].upper(),
+                "P_WPI": 0.0, "P_Market": 0.0, "Alpha_Edge": -99.0, "Notes": status
+            })
+
+    # 🗂️ STREAMLINED PROBABILITY MATRICES SORTING
+    df_active = pd.DataFrame([r for r in raw_results if r.get("Alpha_Edge", -99.0) != -99.0])
+    df_filtered = pd.DataFrame([r for r in raw_results if r.get("Alpha_Edge", -99.0) == -99.0])
+    
+    # Portfolio Group: Extract exactly the Top 10 rows by Simulated True Probability
+    rank_prob = df_active.sort_values(by="P_WPI", ascending=False).head(10).copy()
+    rank_prob["Optimization_Category"] = "TOP_10_PROBABILITY"
+
+    # Concatenate streamlined arrays together
+    final_df = pd.concat([rank_prob, df_filtered], ignore_index=True)
+    
+    if not final_df.empty:
+        final_df["P_WPI"] = final_df.apply(lambda r: f"{r['P_WPI']*100:.1f}%" if r["Alpha_Edge"] != -99.0 else "FILTERED", axis=1)
+        final_df["P_Market"] = final_df.apply(lambda r: f"{r['P_Market']*100:.1f}%" if r["Alpha_Edge"] != -99.0 else "FILTERED", axis=1)
+        final_df["Alpha_Edge"] = final_df.apply(lambda r: f"{r['Alpha_Edge']*100:+.1f}%" if r["Alpha_Edge"] != -99.0 else "BLOCKED", axis=1)
+
+    # 💾 PERSISTENT APPEND EXPORT MODULE (mode='a')
+    output_file = "alpha_market_matrix.csv"
+    file_exists = os.path.isfile(output_file)
+    
+    if not final_df.empty:
+        final_df.to_csv(output_file, mode='a', index=False, header=not file_exists)
+        print(f"📊 SUCCESS! Appended {len(final_df)} streamlined API probability entries to '{output_file}'.")
+    else:
+        print("⚠️ Pipeline alert: Calculated matrix returned empty. Data append skipped.")
 
 if __name__ == "__main__":
     run_cloud_pipeline()
