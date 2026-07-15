@@ -1,7 +1,7 @@
 """
-WPI Quantitative Sports Engine (v15.0 - Multi-Sport API Ingestion Circuit)
+WPI Quantitative Sports Engine (v16.0 - High-Speed Plain Text Ingestion Circuit)
 File Name: automated_pipeline.py
-Chunk 1 of 4: System Dependencies, Initialization Layer, and Core Mechanics
+Chunk 1 of 4: Core Module Dependencies, Initialization, and Hard Market Filters
 """
 
 import os
@@ -15,7 +15,7 @@ import requests
 
 class WPIRawEngine:
     def __init__(self):
-        print("⚡ WPI Autonomous Multi-Sport Engine Active. Calibrating cross-sport parameter arrays...")
+        print("⚡ WPI Autonomous Engine Active. Calibrating cross-sport parameter arrays...")
 
     def sigmoid(self, x):
         """Standard logistic sigmoid function compressing interaction tokens between 0 and 1."""
@@ -172,73 +172,76 @@ class WPIRawEngine:
         alpha_edge = p_wpi - p_market
         return p_wpi, p_market, alpha_edge, "SUCCESS"
 def run_cloud_pipeline():
-    print("🛰️ Opening Clean API Ingestion Layer...")
+    print("🛰️ Connecting to Plain Text Sports Node Circuit...")
     today_str = datetime.now().strftime("%Y-%m-%d")
     portfolio = []
     
-    league_endpoints = {
-        "soccer": "https://espn.com",
-        "basketball": "https://espn.com",
-        "tennis": "https://espn.com",
-        "mlb": "https://espn.com"
-    }
-    
-    for sport_key, url in league_endpoints.items():
-        try:
-            print(f"🔗 Requesting clean schedule arrays from ESPN {sport_key.upper()} backend...")
-            response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
-            if response.status_code != 200: 
-                continue
-            data = response.json()
-            events = data.get('events', [])
+    try:
+        # Ingest raw document payload matrix lines directly via network requests
+        url = "https://plaintextsports.com/"
+        response = requests.get(url, headers={"User-Agent": "WPI Quant Engine v16.0"}, timeout=10)
+        
+        if response.status_code == 200:
+            lines = response.text.split('\n')
+            print(f"📊 Document verified. Parsing {len(lines)} plain text sequence records.")
             
-            for event in events:
-                try:
-                    league_name = data.get('leagues', [{}]).get('name', 'ESPN Pro Circuit')
-                    competition = event.get('competitions', [{}])
-                    competitors = competition.get('competitors', [])
-                    home_item = next((c for c in competitors if c.get('homeAway') == 'home'), None)
-                    away_item = next((c for c in competitors if c.get('homeAway') == 'away'), None)
-                    
-                    if home_item and away_item:
-                        home_team = home_item.get('team', {}).get('displayName')
-                        away_team = away_item.get('team', {}).get('displayName')
-                        if home_team and away_team:
-                            if sport_key == "basketball":
-                                sport, m_type, odds, val = "basketball", "moneyline", -160, None
-                                home_m = {'xg_adjusted': 1.12, 'sot_surge': 0.05, 'league_scalar': 1.08, 'xga_adjusted': 0.96, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.06, 'form_def_delta': -0.02, 'rest_hours': 72, 'travel_friction': 0.0}
-                                away_m = {'xg_adjusted': 0.98, 'sot_surge': 0.02, 'league_scalar': 1.08, 'xga_adjusted': 1.10, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': -0.02, 'form_def_delta': 0.04, 'rest_hours': 48, 'travel_friction': 0.4}
-                            elif sport_key == "tennis":
-                                sport, m_type, odds, val = "tennis", "moneyline", -155, None
-                                home_m = {'elo_surface': {'clay': 1950}, 'dominance_ratio': 1.21, 'hold_pct': 0.86, 'break_pct': 0.28, 'first_serve_pct': 0.67, 'first_serve_pts_won': 0.76, 'games_played_72h': 18, 'rest_hours': 48}
-                                away_m = {'elo_surface': {'clay': 1780}, 'dominance_ratio': 1.04, 'hold_pct': 0.84, 'break_pct': 0.18, 'first_serve_pct': 0.61, 'first_serve_pts_won': 0.72, 'games_played_72h': 24, 'rest_hours': 24}
-                            elif sport_key == "mlb":
+            current_league = "Global Circuit"
+            i = 0
+            while i < len(lines):
+                line = lines[i].strip()
+                
+                # Dynamic context tracker isolates sports and leagues dynamically as it traverses the lines
+                if "World Cup" in line or "FIFA" in line:
+                    current_league = "FIFA World Cup"
+                elif "Major League Baseball" in line or "MLB" in line:
+                    current_league = "MLB"
+                elif "National Women's Soccer" in line or "NWSL" in line:
+                    current_league = "NWSL"
+                elif "Major League Soccer" in line or "MLS" in line:
+                    current_league = "MLS"
+                
+                # Target text ascii-grid pattern match blockers: "+-----------------+"
+                if "+-------" in line or "+---" in line:
+                    try:
+                        # Extract the next sequential lines tracking matchup contenders
+                        team_1 = lines[i+2].replace('|', '').strip()
+                        team_2 = lines[i+3].replace('|', '').strip()
+                        
+                        if team_1 and team_2 and not team_1.startswith('+') and not team_2.startswith('+'):
+                            # Translate mapped records directly to targeted sports calculation footprints
+                            if current_league == "MLB":
                                 sport, m_type, odds, val = "mlb", "f5", -110, None
                                 home_m = {'starter_fip': 3.42, 'bullpen_xfip': 3.85, 'woba_vs_hand': 0.334, 'runs_per_inning': 0.52}
                                 away_m = {'starter_fip': 4.12, 'bullpen_xfip': 4.22, 'woba_vs_hand': 0.312, 'runs_per_inning': 0.48}
-                            else:
+                            elif current_league in ["FIFA World Cup", "NWSL", "MLS"]:
                                 sport, m_type, odds, val = "soccer", "moneyline", -110, None
                                 home_m = {'xg_adjusted': 1.85, 'sot_surge': 0.14, 'league_scalar': 1.0, 'xga_adjusted': 0.78, 'ppda': 8.2, 'clearance_factor': 1.15, 'form_xg_delta': 0.22, 'form_def_delta': -0.11, 'rest_hours': 96, 'travel_friction': 0.1}
                                 away_m = {'xg_adjusted': 1.62, 'sot_surge': 0.08, 'league_scalar': 1.0, 'xga_adjusted': 1.12, 'ppda': 10.5, 'clearance_factor': 0.95, 'form_xg_delta': -0.05, 'form_def_delta': 0.18, 'rest_hours': 72, 'travel_friction': 0.3}
+                            else:
+                                sport, m_type, odds, val = "basketball", "moneyline", -160, None
+                                home_m = {'xg_adjusted': 1.12, 'sot_surge': 0.05, 'league_scalar': 1.08, 'xga_adjusted': 0.96, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.06, 'form_def_delta': -0.02, 'rest_hours': 72, 'travel_friction': 0.0}
+                                away_m = {'xg_adjusted': 0.98, 'sot_surge': 0.02, 'league_scalar': 1.08, 'xga_adjusted': 1.10, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': -0.02, 'form_def_delta': 0.04, 'rest_hours': 48, 'travel_friction': 0.4}
 
                             portfolio.append({
-                                "Sport": sport, "League": league_name, "Home": home_team, "Away": away_team,
-                                "Target": f"{home_team} Clean Line", "Odds": odds, "Type": m_type, "Value": val,
+                                "Sport": sport, "League": current_league, "Home": team_2, "Away": team_1,
+                                "Target": f"{team_2} Moneyline", "Odds": odds, "Type": m_type, "Value": val,
                                 "Home_M": home_m, "Away_M": away_m, "Env": {'temp': 74, 'humidity': 55, 'venue_index': 1.02, 'surface': 'clay', 'park_factor': 1.00}
                             })
-                except Exception: 
-                    continue
-        except Exception: 
-            continue
+                            i += 4 # Advance the list pointer cleanly past the parsed text block
+                    except Exception:
+                        pass
+                i += 1
+    except Exception as e:
+        print(f"❌ Network Request Exception: {str(e)}")
 
-    # Transmit acquired portfolio array elements cleanly to processing channels
+    # Forward the newly loaded data portfolio over to the closed processing block
     execute_matrix_processing(portfolio, today_str)
 def execute_matrix_processing(portfolio, today_str):
     """Processes simulations independently outside the network request block to preserve layout indenting."""
     if len(portfolio) == 0:
-        print("❌ CRITICAL ERROR: Live API data nodes returned 0 scheduled games.")
-        print("🛑 Disengaging pipeline to prevent empty branch commits.")
-        raise ValueError("DataIngestionError: Active portfolio validation array tracks null.")
+        print("❌ CRITICAL ERROR: Plain Text Sports parser returned 0 scheduled games.")
+        print("🛑 Disengaging pipeline to prevent empty database updates.")
+        raise ValueError("DataIngestionError: Active portfolio tracking array is null.")
 
     engine = WPIRawEngine()
     raw_results = []
@@ -278,7 +281,7 @@ def execute_matrix_processing(portfolio, today_str):
     if not final_df.empty:
         final_df["P_WPI"] = final_df.apply(lambda r: f"{r['P_WPI']*100:.1f}%" if r["Alpha_Edge"] != -99.0 else "FILTERED", axis=1)
         final_df["P_Market"] = final_df.apply(lambda r: f"{r['P_Market']*100:.1f}%" if r["Alpha_Edge"] != -99.0 else "FILTERED", axis=1)
-        final_df["Alpha_Edge"] = final_df.apply(lambda r: f"{r['Alpha_Edge']*100:+.1f}%" if r["Alpha_Edge"] != -99.0 else "BLOCKED", axis=1)
+        final_df["Alpha_Edge"] = final_df.apply(lambda r: f"{r['Alpha_Edge']*100:+.1f}%" if r["Alpha_Edge"] != -99.0 else "BLOCKED", git_push=True, axis=1)
 
     # 💾 PERSISTENT APPEND EXPORT MODULE (mode='a')
     output_file = "alpha_market_matrix.csv"
@@ -286,7 +289,7 @@ def execute_matrix_processing(portfolio, today_str):
     
     if not final_df.empty:
         final_df.to_csv(output_file, mode='a', index=False, header=not file_exists)
-        print(f"📊 SUCCESS! Appended {len(final_df)} streamlined API probability entries to '{output_file}'.")
+        print(f"📊 SUCCESS! Appended {len(final_df)} streamlined plain text schedule entries to '{output_file}'.")
     else:
         print("⚠️ Pipeline alert: Calculated matrix returned empty. Data append skipped.")
 
