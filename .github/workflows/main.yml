@@ -13,9 +13,11 @@ jobs:
       contents: write # Grants the server critical write permissions to update files in your repository
 
     steps:
-      # Step 1: Clone your repository files from the GitHub cloud onto the virtual server
+      # Step 1: Clone your repository files and persist the security token
       - name: Checkout Repository Workspace
         uses: actions/checkout@v4
+        with:
+          persist-credentials: true # Crucial flag to prevent 128 push errors
 
       # Step 2: Provision a clean Python 3.10 architecture on the virtual machine
       - name: Set Up Cloud Python Runtime
