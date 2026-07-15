@@ -1,1 +1,9 @@
 Date,League,Matchup,Target_Selection,Market_Odds,Market_Type,P_WPI,P_Market,Alpha_Edge,Optimization_Category
+2026-07-15,ATP Gstaad Circuit,Stefanos Tsitsipas vs Jan-Lennard Struff,Tsitsipas Match Winner,-155,MONEYLINE,98.9%,60.8%,+38.1%,TOP_10_PROBABILITY
+2026-07-15,WNBA Pro,Minnesota Lynx vs LA Sparks,Minnesota Lynx ML,-160,MONEYLINE,97.2%,61.5%,+35.7%,TOP_10_PROBABILITY
+2026-07-15,FIFA World Cup,Argentina vs England,Argentina To Qualify,-120,TO_QUALIFY,88.9%,54.5%,+34.3%,TOP_10_PROBABILITY
+2026-07-15,WNBA Pro,Indiana Fever vs GS Valkyries,Indiana Fever ML,-115,MONEYLINE,85.1%,53.5%,+31.6%,TOP_10_PROBABILITY
+2026-07-15,ATP Gstaad Circuit,Stefanos Tsitsipas vs Jan-Lennard Struff,Tsitsipas Match Winner,-155,MONEYLINE,98.9%,60.8%,+38.1%,TOP_5_EXPECTED_VALUE
+2026-07-15,WNBA Pro,Minnesota Lynx vs LA Sparks,Minnesota Lynx ML,-160,MONEYLINE,97.2%,61.5%,+35.7%,TOP_5_EXPECTED_VALUE
+2026-07-15,FIFA World Cup,Argentina vs England,Argentina To Qualify,-120,TO_QUALIFY,88.9%,54.5%,+34.3%,TOP_5_EXPECTED_VALUE
+2026-07-15,WNBA Pro,Indiana Fever vs GS Valkyries,Indiana Fever ML,-115,MONEYLINE,85.1%,53.5%,+31.6%,TOP_5_EXPECTED_VALUE
