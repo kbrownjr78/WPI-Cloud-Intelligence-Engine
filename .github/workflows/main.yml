@@ -33,7 +33,9 @@ jobs:
           pip install numpy pandas requests
 
       # Step 4: Execute the multi-sport text schedule parser and fire 100,000 Monte Carlo loops
-      - name: Run Ingestion and Compute Monte Carlo Engine
+      - name: Run Scraper and Compute Monte Carlo Model
+        env:
+          SPORTRADAR_SECRET_API_KEY: ${{ secrets.SPORTRADAR_SECRET_API_KEY }}
         run: python automated_pipeline.py
 
       # Step 5: Securely append today's new simulation matrix rows to your repository spreadsheet tracker
