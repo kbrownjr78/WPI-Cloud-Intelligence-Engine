@@ -1,7 +1,7 @@
 """
-WPI Quantitative Sports Engine (v23.0 - TheSportsDB Ingestion Circuit)
+WPI Quantitative Sports Engine (v24.0 - Direct DraftKings API Ingestion)
 File Name: automated_pipeline.py
-Chunk 1 of 4: System Dependencies, Framework Setup, and Hard Market Filters
+Chunk 1 of 4: Core Module Dependencies, Initialization, and Hard Market Filters
 """
 
 import os
@@ -15,7 +15,7 @@ import requests
 
 class WPIRawEngine:
     def __init__(self):
-        print("⚡ WPI Autonomous Engine Active. Calibrating cross-sport parameter arrays...")
+        print("⚡ WPI DraftKings Live Pricing Matrix Core Initialized.")
 
     def sigmoid(self, x):
         """Standard logistic sigmoid function compressing interaction tokens between 0 and 1."""
@@ -38,43 +38,12 @@ class WPIRawEngine:
             
         return True, "PASSED"
     def run_simulation(self, sport, home_team, away_team, target_selection, home_metrics, away_metrics, env_metrics, market_odds, line_value=None, market_type='moneyline'):
-        """Executes 100,000-loop Monte Carlo distribution structures across multi-sport and segmented targets."""
+        """Executes 100,000-loop Monte Carlo distribution structures across multi-sport targets."""
         passed, msg = self.evaluate_hard_market_filters(market_odds, sport, line_value, market_type)
         if not passed:
             return None, None, None, f"FILTERED: {msg}"
 
-        # 🔬 1. MICRO INDIVIDUAL PLAYER PROP ROUTING MATRIX
-        if market_type.lower() in ['player_prop', 'prop']:
-            iterations = 100000
-            if sport.lower() == 'soccer':
-                if 'goal' in target_selection.lower():
-                    expected_player_goals = home_metrics.get('prop_baseline', 0.28) * env_metrics.get('matchup_scalar', 1.0)
-                    sim_prop = np.random.poisson(expected_player_goals, iterations)
-                    p_wpi = np.sum(sim_prop >= 1) / iterations
-                else:
-                    expected_stat = home_metrics.get('prop_baseline', 1.5) * env_metrics.get('matchup_scalar', 1.0)
-                    sim_prop = np.random.normal(expected_stat, home_metrics.get('prop_variance', 0.45), iterations)
-                    p_wpi = np.sum(sim_prop > line_value) / iterations if 'under' not in target_selection.lower() else np.sum(sim_prop < line_value) / iterations
-            elif sport.lower() in ['mlb', 'baseball']:
-                if 'strikeouts' in target_selection.lower() or 'k' in target_selection.lower():
-                    expected_k = home_metrics.get('prop_baseline', 5.5) * env_metrics.get('matchup_scalar', 1.0)
-                    sim_prop = np.random.normal(expected_k, home_metrics.get('prop_variance', 1.2), iterations)
-                else:
-                    expected_tb = home_metrics.get('prop_baseline', 1.5) * env_metrics.get('matchup_scalar', 1.0)
-                    sim_prop = np.random.poisson(expected_tb, iterations)
-                p_wpi = np.sum(sim_prop > line_value) / iterations if 'under' not in target_selection.lower() else np.sum(sim_prop < line_value) / iterations
-            elif sport.lower() in ['basketball', 'wnba']:
-                expected_pra = home_metrics.get('prop_baseline', 22.5) * env_metrics.get('pace_scalar', 1.0)
-                sim_prop = np.random.normal(expected_pra, home_metrics.get('prop_variance', 3.5), iterations)
-                p_wpi = np.sum(sim_prop > line_value) / iterations if 'under' not in target_selection.lower() else np.sum(sim_prop < line_value) / iterations
-            else:
-                p_wpi = 0.0
-
-            p_market = self.convert_odds_to_implied_prob(market_odds)
-            alpha_edge = p_wpi - p_market
-            return p_wpi, p_market, alpha_edge, "SUCCESS"
-
-        # 🏟️ 2. BASEBALL INNING-SEGMENT POISSON Core (F3, F5, F7, FULL GAME)
+        # 🏟️ BASEBALL INNING-SEGMENT POISSON CORE (MLB)
         if sport.lower() in ['mlb', 'baseball']:
             if market_type.lower() == 'f3':
                 inning_scale, pen_weight_home, pen_weight_away = 3.0, 0.0, 0.0
@@ -104,131 +73,104 @@ class WPIRawEngine:
             else:
                 p_wpi = np.sum(sim_home > sim_away) / iterations
             
-            p_market = self.convert_odds_to_implied_prob(market_odds)
-            alpha_edge = p_wpi - p_market
-            return p_wpi, p_market, alpha_edge, "SUCCESS"
-
-        # 🎾 3. TENNIS MODE INTERACTION LAYERS
-        if sport.lower() == 'tennis':
-            elo_a = home_metrics['elo_surface']['clay']
-            elo_b = away_metrics['elo_surface']['clay']
-            serve_eff_a = home_metrics['first_serve_pct'] * home_metrics['first_serve_pts_won']
-            serve_eff_b = away_metrics['first_serve_pct'] * away_metrics['first_serve_pts_won']
-            
-            base_a = (elo_a / 1500.0) * home_metrics['dominance_ratio'] * ((0.6 * home_metrics['hold_pct']) + (0.4 * home_metrics['break_pct'])) * (1 + serve_eff_a)
-            base_b = (elo_b / 1500.0) * away_metrics['dominance_ratio'] * ((0.6 * away_metrics['hold_pct']) + (0.4 * away_metrics['break_pct'])) * (1 + serve_eff_b)
-            fatigue_a = home_metrics['games_played_72h'] / max(home_metrics['rest_hours'], 1)
-            fatigue_b = away_metrics['games_played_72h'] / max(away_metrics['rest_hours'], 1)
-            
-            expected_home = base_a * (1.0 - (0.05 * fatigue_a))
-            expected_away = base_b * (1.0 - (0.05 * fatigue_b))
-            
-            iterations = 100000
-            sim_a = np.random.normal(expected_home, 0.15, iterations)
-            sim_b = np.random.normal(expected_away, 0.15, iterations)
-            p_wpi = np.sum(sim_a > sim_b) / iterations
-            p_market = self.convert_odds_to_implied_prob(market_odds)
-            alpha_edge = p_wpi - p_market
-            return p_wpi, p_market, alpha_edge, "SUCCESS"
-
-        # ⚽🏀 4. TEAM BASKETBALL & SOCCER INTERACTION LAYERS
-        home_oi = home_metrics['xg_adjusted'] * (1 + home_metrics['sot_surge']) * home_metrics['league_scalar'] * 0.65
-        away_oi = away_metrics['xg_adjusted'] * (1 + away_metrics['sot_surge']) * away_metrics['league_scalar'] * 0.65
-        home_di = home_metrics['xga_adjusted'] * (home_metrics['ppda'] * home_metrics['clearance_factor']) * 1.14 * home_metrics['league_scalar']
-        away_di = away_metrics['xga_adjusted'] * (away_metrics['ppda'] * away_metrics['clearance_factor']) * 1.14 * away_metrics['league_scalar']
-
-        home_sf = (home_metrics['form_xg_delta'] - home_metrics['form_def_delta']) + math.log(max(home_metrics['rest_hours'], 1)) - home_metrics['travel_friction']
-        away_sf = (away_metrics['form_xg_delta'] - away_metrics['form_def_delta']) + math.log(max(away_metrics['rest_hours'], 1)) - away_metrics['travel_friction']
-        sf_live_delta = home_sf - away_sf
-
-        weather_lambda = 1.025 if env_metrics['temp'] > 80 and env_metrics['humidity'] > 55 else (0.945 if env_metrics['temp'] < 52 and env_metrics['humidity'] > 70 else 1.000)
-        base_interaction = (0.4 * (home_oi * away_di)) - (0.4 * (home_di * away_oi)) + (0.1 * math.pow(env_metrics['venue_index'], weather_lambda)) + (0.1 * sf_live_delta)
-        p_base_home = self.sigmoid(base_interaction)
-        
-        if sport.lower() == 'soccer' and market_type.lower() == '1h':
-            expected_home = p_base_home * 1.6 * 0.45
-            expected_away = (1 - p_base_home) * 1.3 * 0.45
-        elif sport.lower() == 'basketball' and market_type.lower() == '1h':
-            expected_home = p_base_home * 98.5 * 0.50
-            expected_away = (1 - p_base_home) * 94.2 * 0.50
+        # ⚽🏀 TEAM BASKETBALL & SOCCER INTERACTION LAYERS
         else:
+            home_oi = home_metrics['xg_adjusted'] * (1 + home_metrics['sot_surge']) * home_metrics['league_scalar'] * 0.65
+            away_oi = away_metrics['xg_adjusted'] * (1 + away_metrics['sot_surge']) * away_metrics['league_scalar'] * 0.65
+            home_di = home_metrics['xga_adjusted'] * (home_metrics['ppda'] * home_metrics['clearance_factor']) * 1.14 * home_metrics['league_scalar']
+            away_di = away_metrics['xga_adjusted'] * (away_metrics['ppda'] * away_metrics['clearance_factor']) * 1.14 * away_metrics['league_scalar']
+
+            home_sf = (home_metrics['form_xg_delta'] - home_metrics['form_def_delta']) + math.log(max(home_metrics['rest_hours'], 1)) - home_metrics['travel_friction']
+            away_sf = (away_metrics['form_xg_delta'] - away_metrics['form_def_delta']) + math.log(max(away_metrics['rest_hours'], 1)) - away_metrics['travel_friction']
+            sf_live_delta = home_sf - away_sf
+
+            weather_lambda = 1.025 if env_metrics['temp'] > 80 and env_metrics['humidity'] > 55 else (0.945 if env_metrics['temp'] < 52 and env_metrics['humidity'] > 70 else 1.000)
+            base_interaction = (0.4 * (home_oi * away_di)) - (0.4 * (home_di * away_oi)) + (0.1 * math.pow(env_metrics['venue_index'], weather_lambda)) + (0.1 * sf_live_delta)
+            p_base_home = self.sigmoid(base_interaction)
+            
             expected_home = p_base_home * 1.6 if sport.lower() == 'soccer' else p_base_home * 98.5
             expected_away = (1 - p_base_home) * 1.3 if sport.lower() == 'soccer' else (1 - p_base_home) * 94.2
 
-        iterations = 100000
-        sim_home = np.random.poisson(expected_home, iterations)
-        sim_away = np.random.poisson(expected_away, iterations)
-        
-        if market_type == 'to_qualify':
-            p_wpi = (np.sum(sim_home > sim_away) + (np.sum(sim_home == sim_away) * 0.53)) / iterations
-        elif market_type in ['over_goals', 'total', '1h_total']:
-            p_wpi = np.sum((sim_home + sim_away) > line_value) / iterations
-        elif market_type in ['spread', '1h_spread']:
-            p_wpi = np.sum((sim_home + line_value) > sim_away) / iterations
-        else:
-            p_wpi = np.sum(sim_home > sim_away) / iterations
+            iterations = 100000
+            sim_home = np.random.poisson(expected_home, iterations)
+            sim_away = np.random.poisson(expected_away, iterations)
+            
+            if market_type in ['over_goals', 'total', '1h_total']:
+                p_wpi = np.sum((sim_home + sim_away) > line_value) / iterations
+            elif market_type in ['spread', '1h_spread']:
+                p_wpi = np.sum((sim_home + line_value) > sim_away) / iterations
+            else:
+                p_wpi = np.sum(sim_home > sim_away) / iterations
 
         p_market = self.convert_odds_to_implied_prob(market_odds)
         alpha_edge = p_wpi - p_market
         return p_wpi, p_market, alpha_edge, "SUCCESS"
 def run_cloud_pipeline():
-    print("🛰️ Synchronizing data ingestion pipelines with TheSportsDB REST nodes...")
+    print("🛰️ Connecting to DraftKings Open REST API Infrastructure...")
     today_str = datetime.now().strftime("%Y-%m-%d")
     portfolio = []
     
-    # Core target tracking leagues mapped to TheSportsDB internal ID vectors
-    # 4328 = EPL/Soccer, 4426 = MLB, 4440 = WNBA
-    target_leagues = [
-        {"sport": "soccer", "id": "4328"},
-        {"sport": "mlb", "id": "4426"},
-        {"sport": "basketball", "id": "4440"}
+    # Core active league IDs mapped inside DraftKings database architecture
+    # 84240 = MLB, 84247 = WNBA, 10041 = FIFA World Cup / Pro Soccer Circuits
+    dk_sport_groups = [
+        {"sport": "mlb", "id": "84240"},
+        {"sport": "basketball", "id": "84247"},
+        {"sport": "soccer", "id": "10041"}
     ]
     
-    for league in target_leagues:
+    for group in dk_sport_groups:
         try:
-            sport_type = league["sport"]
-            # Utilizes TheSportsDB free open api key framework ("1") for global calendar listings
-            url = f"https://thesportsdb.com{today_str}&l={league['id']}"
+            sport_key = group["sport"]
+            url = f"https://draftkings.com{group['id']}/events"
             
-            print(f"🔗 Polling TheSportsDB Endpoint: Sport {sport_type.upper()} for date {today_str}...")
-            response = requests.get(url, headers={"User-Agent": "WPI-Quant-Engine-v23.0"}, timeout=10)
+            print(f"🔗 Requesting active market boards for DraftKings ID Group: {group['id']} ({sport_key.upper()})...")
+            response = requests.get(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}, timeout=12)
             
             if response.status_code == 200 and response.json():
                 json_data = response.json()
                 events = json_data.get("events", [])
                 
-                # Fallback handler: If calendar day endpoint maps blank, check live event query channels
-                if not events:
-                    live_url = f"https://thesportsdb.com{league['id']}"
-                    live_resp = requests.get(live_url, timeout=10)
-                    if live_resp.status_code == 200:
-                        events = live_resp.json().get("events", [])
+                # Dynamic tracker links events to offer selections via a unified cross-reference ID map
+                display_groups = json_data.get("displayGroups", [{}])
+                offer_categories = display_groups[0].get("offerCategories", [{}]) if display_groups else [{}]
+                offer_lists = offer_categories[0].get("offerLists", [{}]) if offer_categories else [{}]
+                offers = offer_lists[0].get("offers", []) if offer_lists else []
                 
-                print(f"📊 Extracted data array nodes. Found {len(events or [])} active tracking lines.")
+                print(f"📊 Isolated network responses. Found {len(events)} matches and {len(offers)} pricing nodes.")
                 
-                for event in events or []:
+                for event in events:
                     try:
-                        home_team = event.get("strHomeTeam", event.get("strEvent", "").split("vs")[0].strip())
-                        away_team = event.get("strAwayTeam", event.get("strEvent", "").split("vs")[-1].strip())
-                        league_name = event.get("strLeague", "TheSportsDB Circuit")
+                        home_team = event.get("homeTeamName")
+                        away_team = event.get("awayTeamName")
+                        event_id = event.get("eventId")
+                        league_name = event.get("leagueName", f"DraftKings {sport_key.upper()} Board")
+                        
+                        # Isolate the exact matching moneyline pricing node for this specific event ID
+                        match_offer = next((o for o in offers if str(o.get("eventId")) == str(event_id)), None)
+                        outcomes = match_offer.get("outcomes", []) if match_offer else []
+                        
+                        # Default opening line fallback if a match is temporarily unpriced on the live board
+                        odds_home = -110
+                        if len(outcomes) >= 2:
+                            odds_home = int(outcomes[0].get("oddsAmerican", -110))
                         
                         if home_team and away_team and home_team != away_team:
-                            if sport_type == "basketball":
-                                sport, m_type, odds, val = "basketball", "moneyline", -160, None
+                            if sport_key == "basketball":
+                                sport, m_type = "basketball", "moneyline"
                                 home_m = {'xg_adjusted': 1.12, 'sot_surge': 0.05, 'league_scalar': 1.08, 'xga_adjusted': 0.96, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.06, 'form_def_delta': -0.02, 'rest_hours': 72, 'travel_friction': 0.0}
                                 away_m = {'xg_adjusted': 0.98, 'sot_surge': 0.02, 'league_scalar': 1.08, 'xga_adjusted': 1.10, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': -0.02, 'form_def_delta': 0.04, 'rest_hours': 48, 'travel_friction': 0.4}
-                            elif sport_type == "mlb":
-                                sport, m_type, odds, val = "mlb", "f5", -110, None
+                            elif sport_key == "mlb":
+                                sport, m_type = "mlb", "f5"
                                 home_m = {'starter_fip': 3.42, 'bullpen_xfip': 3.85, 'woba_vs_hand': 0.334, 'runs_per_inning': 0.52}
                                 away_m = {'starter_fip': 4.12, 'bullpen_xfip': 4.22, 'woba_vs_hand': 0.312, 'runs_per_inning': 0.48}
                             else:
-                                sport, m_type, odds, val = "soccer", "moneyline", -110, None
+                                sport, m_type = "soccer", "moneyline"
                                 home_m = {'xg_adjusted': 1.85, 'sot_surge': 0.14, 'league_scalar': 1.0, 'xga_adjusted': 0.78, 'ppda': 8.2, 'clearance_factor': 1.15, 'form_xg_delta': 0.22, 'form_def_delta': -0.11, 'rest_hours': 96, 'travel_friction': 0.1}
                                 away_m = {'xg_adjusted': 1.62, 'sot_surge': 0.08, 'league_scalar': 1.0, 'xga_adjusted': 1.12, 'ppda': 10.5, 'clearance_factor': 0.95, 'form_xg_delta': -0.05, 'form_def_delta': 0.18, 'rest_hours': 72, 'travel_friction': 0.3}
 
                             portfolio.append({
                                 "Sport": sport, "League": league_name, "Home": home_team, "Away": away_team,
-                                "Target": f"{home_team} ML Line", "Odds": odds, "Type": m_type, "Value": val,
+                                "Target": f"{home_team} Moneyline", "Odds": odds_home, "Type": m_type, "Value": None,
                                 "Home_M": home_m, "Away_M": away_m, "Env": {'temp': 74, 'humidity': 55, 'venue_index': 1.02, 'surface': 'clay', 'park_factor': 1.00}
                             })
                     except Exception: continue
@@ -238,7 +180,7 @@ def run_cloud_pipeline():
 def execute_matrix_processing(portfolio, today_str):
     """Processes simulations independently outside the network request block to preserve layout indenting."""
     if len(portfolio) == 0:
-        print("❌ CRITICAL ERROR: Live TheSportsDB API nodes returned 0 scheduled games.")
+        print("❌ CRITICAL ERROR: Live DraftKings API nodes returned 0 scheduled games.")
         print("🛑 Disengaging pipeline to prevent empty branch commits.")
         raise ValueError("DataIngestionError: Active portfolio tracking array tracks null.")
 
@@ -288,7 +230,7 @@ def execute_matrix_processing(portfolio, today_str):
     
     if not final_df.empty:
         final_df.to_csv(output_file, mode='a', index=False, header=not file_exists)
-        print(f"📊 SUCCESS! Appended {len(final_df)} streamlined TheSportsDB entries to '{output_file}'.")
+        print(f"📊 SUCCESS! Appended {len(final_df)} dynamic DraftKings pricing records to '{output_file}'.")
     else:
         print("⚠️ Pipeline alert: Calculated matrix returned empty. Data append skipped.")
 
