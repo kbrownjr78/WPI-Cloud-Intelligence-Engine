@@ -1,7 +1,7 @@
 """
-WPI Quantitative Sports Engine (v21.0 - Real-Time Live & Upcoming API Architecture)
+WPI Quantitative Sports Engine (v22.0 - Sovereign SportsDataverse API Ingestion)
 File Name: automated_pipeline.py
-Chunk 1 of 4: System Dependencies, Framework Setup, and Hard Market Filters
+Chunk 1 of 4: Core Module Dependencies, Initialization, and Hard Market Filters
 """
 
 import os
@@ -15,7 +15,7 @@ import requests
 
 class WPIRawEngine:
     def __init__(self):
-        print("⚡ WPI Cross-Sport Live Engine Online. Calibrating projection metrics...")
+        print("⚡ WPI SportsDataverse Analytics Core Array Initialized.")
 
     def sigmoid(self, x):
         """Standard logistic sigmoid function compressing interaction tokens between 0 and 1."""
@@ -38,14 +38,10 @@ class WPIRawEngine:
             
         return True, "PASSED"
     def run_simulation(self, sport, home_team, away_team, target_selection, home_metrics, away_metrics, env_metrics, market_odds, line_value=None, market_type='moneyline'):
-        """Executes 100,000-loop Monte Carlo distribution structures across multi-sport live and upcoming targets."""
+        """Executes 100,000-loop Monte Carlo distribution structures across multi-sport targets."""
         passed, msg = self.evaluate_hard_market_filters(market_odds, sport, line_value, market_type)
         if not passed:
             return None, None, None, f"FILTERED: {msg}"
-
-        # Adjust projection models based on live game clock state
-        live_status = env_metrics.get('status', 'STATUS_SCHEDULED')
-        time_scalar = env_metrics.get('time_scalar', 1.00) # Deplicated scaling based on remaining minutes
 
         # 🏟️ BASEBALL INNING-SEGMENT POISSON CORE (MLB)
         if sport.lower() in ['mlb', 'baseball']:
@@ -58,8 +54,6 @@ class WPIRawEngine:
             else:
                 inning_scale, pen_weight_home, pen_weight_away = 9.0, 0.44, 0.44
 
-            inning_scale *= time_scalar # Scales down calculations if live in-play data is processed
-
             base_home_rate = (home_metrics['woba_vs_hand'] * (1 / max(away_metrics['starter_fip'], 0.5))) * home_metrics['runs_per_inning']
             base_away_rate = (away_metrics['woba_vs_hand'] * (1 / max(home_metrics['starter_fip'], 0.5))) * away_metrics['runs_per_inning']
             expected_home = ((base_home_rate * (1.0 - pen_weight_away)) + (away_metrics['bullpen_xfip'] * 0.15 * pen_weight_away)) * inning_scale
@@ -67,8 +61,8 @@ class WPIRawEngine:
             
             park_multiplier = env_metrics.get('park_factor', 1.00)
             weather_delta = 1.05 if env_metrics.get('temp', 72) > 82 else 0.96
-            expected_home_runs = (expected_home * park_multiplier * weather_delta) + env_metrics.get('home_score', 0)
-            expected_away_runs = (expected_away * park_multiplier * weather_delta) + env_metrics.get('away_score', 0)
+            expected_home_runs = expected_home * park_multiplier * weather_delta
+            expected_away_runs = expected_away * park_multiplier * weather_delta
             
             iterations = 100000
             sim_home = np.random.poisson(expected_home_runs, iterations)
@@ -94,12 +88,8 @@ class WPIRawEngine:
             base_interaction = (0.4 * (home_oi * away_di)) - (0.4 * (home_di * away_oi)) + (0.1 * math.pow(env_metrics['venue_index'], weather_lambda)) + (0.1 * sf_live_delta)
             p_base_home = self.sigmoid(base_interaction)
             
-            if sport.lower() == 'soccer':
-                expected_home = (p_base_home * 1.6 * time_scalar) + env_metrics.get('home_score', 0)
-                expected_away = ((1 - p_base_home) * 1.3 * time_scalar) + env_metrics.get('away_score', 0)
-            else: # Basketball configurations
-                expected_home = (p_base_home * 98.5 * time_scalar) + env_metrics.get('home_score', 0)
-                expected_away = ((1 - p_base_home) * 94.2 * time_scalar) + env_metrics.get('away_score', 0)
+            expected_home = p_base_home * 1.6 if sport.lower() == 'soccer' else p_base_home * 98.5
+            expected_away = (1 - p_base_home) * 1.3 if sport.lower() == 'soccer' else (1 - p_base_home) * 94.2
 
             iterations = 100000
             sim_home = np.random.poisson(expected_home, iterations)
@@ -116,67 +106,48 @@ class WPIRawEngine:
         alpha_edge = p_wpi - p_market
         return p_wpi, p_market, alpha_edge, "SUCCESS"
 def run_cloud_pipeline():
-    print("🛰️ Ingesting real-time live and upcoming matchup layers...")
+    print("🛰️ Connecting to SportsDataverse Open-Access API Nodes...")
     today_str = datetime.now().strftime("%Y-%m-%d")
+    date_numeric = datetime.now().strftime("%Y%m%d") # Generates exact 'YYYYMMDD' numeric format for today
     portfolio = []
     
-    # Global high-stability scoreboards indexes tracking live and scheduled blocks
-    league_endpoints = {
-        "soccer": "https://espn.com",
-        "basketball": "https://espn.com",
-        "mlb": "https://espn.com"
-    }
+    # Secure live data arrays querying SportsDataverse CDN structures directly
+    sdv_endpoints = [
+        {"sport": "mlb", "url": f"https://espn.com{date_numeric}"},
+        {"sport": "basketball", "url": f"https://espn.com{date_numeric}"},
+        {"sport": "soccer", "url": f"https://espn.com{date_numeric}"}
+    ]
     
-    for sport_key, url in league_endpoints.items():
+    for target in sdv_endpoints:
         try:
-            response = requests.get(url, headers={"User-Agent": "WPI-Live-Circuit-v21.0"}, timeout=10)
+            sport_type = target["sport"]
+            print(f"🔗 Querying node endpoint vector: {sport_type.upper()} for schedule track...")
+            response = requests.get(target["url"], headers={"User-Agent": "WPI-SportsDataverse-Client-v22.0"}, timeout=10)
             if response.status_code != 200: continue
+            
             data = response.json()
             events = data.get('events', [])
+            print(f"📊 Isolated network response maps. Extracted {len(events)} events for today.")
             
             for event in events:
                 try:
-                    status_obj = event.get('status', {})
-                    status_name = status_obj.get('type', {}).get('name', 'STATUS_SCHEDULED')
-                    
-                    # Prevent tracking completed games
-                    if status_name in ['STATUS_FINAL', 'STATUS_POSTPONED']: continue
-                    
+                    league_name = data.get('leagues', [{}])[0].get('name', 'SportsDataverse Circuit')
                     competition = event.get('competitions', [{}])[0]
                     competitors = competition.get('competitors', [])
+                    
                     home_item = next((c for c in competitors if c.get('homeAway') == 'home'), None)
                     away_item = next((c for c in competitors if c.get('homeAway') == 'away'), None)
                     
                     if home_item and away_item:
                         home_team = home_item.get('team', {}).get('displayName')
                         away_team = away_item.get('team', {}).get('displayName')
-                        home_score = int(home_item.get('score', 0))
-                        away_score = int(away_item.get('score', 0))
-                        
-                        # Compute remaining runtime time-scalar
-                        period = status_obj.get('period', 1)
-                        clock_str = status_obj.get('displayClock', '0:00')
-                        time_scalar = 1.00 # Default fallback for upcoming games
-                        
-                        if status_name == 'STATUS_IN_PROGRESS':
-                            try:
-                                min_split = int(clock_str.split(':')[0])
-                                if sport_key == "mlb":
-                                    time_scalar = max(0.05, (9.0 - period) / 9.0)
-                                elif sport_key == "basketball":
-                                    rem_min = ((4.0 - period) * 10.0) + min_split
-                                    time_scalar = max(0.05, rem_min / 40.0)
-                                else: # Soccer algorithms
-                                    time_scalar = max(0.05, (90.0 - min_split) / 90.0)
-                            except Exception:
-                                time_scalar = 0.50 # Live midpoint standard adjustment factor
                         
                         if home_team and away_team:
-                            if sport_key == "basketball":
+                            if sport_type == "basketball":
                                 sport, m_type, odds, val = "basketball", "moneyline", -110, None
                                 home_m = {'xg_adjusted': 1.12, 'sot_surge': 0.05, 'league_scalar': 1.08, 'xga_adjusted': 0.96, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': 0.06, 'form_def_delta': -0.02, 'rest_hours': 72, 'travel_friction': 0.0}
                                 away_m = {'xg_adjusted': 0.98, 'sot_surge': 0.02, 'league_scalar': 1.08, 'xga_adjusted': 1.10, 'ppda': 1.0, 'clearance_factor': 1.0, 'form_xg_delta': -0.02, 'form_def_delta': 0.04, 'rest_hours': 48, 'travel_friction': 0.4}
-                            elif sport_key == "mlb":
+                            elif sport_type == "mlb":
                                 sport, m_type, odds, val = "mlb", "f5", -110, None
                                 home_m = {'starter_fip': 3.42, 'bullpen_xfip': 3.85, 'woba_vs_hand': 0.334, 'runs_per_inning': 0.52}
                                 away_m = {'starter_fip': 4.12, 'bullpen_xfip': 4.22, 'woba_vs_hand': 0.312, 'runs_per_inning': 0.48}
@@ -186,25 +157,25 @@ def run_cloud_pipeline():
                                 away_m = {'xg_adjusted': 1.62, 'sot_surge': 0.08, 'league_scalar': 1.0, 'xga_adjusted': 1.12, 'ppda': 10.5, 'clearance_factor': 0.95, 'form_xg_delta': -0.05, 'form_def_delta': 0.18, 'rest_hours': 72, 'travel_friction': 0.3}
 
                             portfolio.append({
-                                "Sport": sport, "League": data.get('leagues', [{}])[0].get('name', 'Pro League'),
-                                "Home": home_team, "Away": away_team, "Target": f"{home_team} In-Play Line" if status_name == 'STATUS_IN_PROGRESS' else f"{home_team} Opening Line",
+                                "Sport": sport, "League": league_name, "Home": home_team, "Away": away_team, "Target": f"{home_team} Moneyline",
                                 "Odds": odds, "Type": m_type, "Value": val, "Home_M": home_m, "Away_M": away_m,
-                                "Env": {'temp': 74, 'humidity': 55, 'venue_index': 1.02, 'surface': 'clay', 'park_factor': 1.00, 'status': status_name, 'time_scalar': time_scalar, 'home_score': home_score, 'away_score': away_score}
+                                "Env": {'temp': 74, 'humidity': 55, 'venue_index': 1.02, 'surface': 'clay', 'park_factor': 1.00}
                             })
                 except Exception: continue
         except Exception: continue
 
     execute_matrix_processing(portfolio, today_str)
 def execute_matrix_processing(portfolio, today_str):
-    """Processes live and upcoming board selections and appends outputs cleanly to log matrix."""
+    """Processes simulations independently outside the network request block to preserve layout indenting."""
     if len(portfolio) == 0:
-        print("❌ Core pipeline notice: No live or upcoming games currently active on the board.")
-        return
+        print("❌ CRITICAL ERROR: SportsDataverse CDN layers returned 0 scheduled games for today.")
+        print("🛑 Disengaging pipeline to prevent empty branch updates.")
+        raise ValueError("DataIngestionError: Active portfolio tracking array tracks null.")
 
     engine = WPIRawEngine()
     raw_results = []
     
-    print(f"🚀 Running 100,000-loop multi-sport randomizations across all {len(portfolio)} parsed items...")
+    print(f"🚀 Running 100,000-loop multi-sport randomizations across all {len(portfolio)} active items...")
     for match in portfolio:
         p_wpi, p_market, alpha, status = engine.run_simulation(
             match["Sport"], match["Home"], match["Away"], match["Target"],
@@ -216,16 +187,16 @@ def execute_matrix_processing(portfolio, today_str):
             raw_results.append({
                 "Date": today_str, "League": match["League"], "Matchup": f"{match['Home']} vs {match['Away']}",
                 "Target_Selection": match["Target"], "Market_Odds": match["Odds"], "Market_Type": match["Type"].upper(),
-                "P_WPI": p_wpi, "P_Market": p_market, "Alpha_Edge": alpha, "Notes": match["Env"]["status"]
+                "P_WPI": p_wpi, "P_Market": p_market, "Alpha_Edge": alpha
             })
         else:
             raw_results.append({
                 "Date": today_str, "League": match["League"], "Matchup": f"{match['Home']} vs {match['Away']}",
                 "Target_Selection": match["Target"], "Market_Odds": match["Odds"], "Market_Type": match["Type"].upper(),
-                "P_WPI": 0.0, "P_Market": 0.0, "Alpha_Edge": -99.0, "Notes": "FILTERED"
+                "P_WPI": 0.0, "P_Market": 0.0, "Alpha_Edge": -99.0, "Notes": status
             })
 
-    # 🗂️ PROBABILITY SORTING MATRIX FILTER
+    # 🗂️ STREAMLINED PROBABILITY MATRICES SORTING
     df_active = pd.DataFrame([r for r in raw_results if r.get("Alpha_Edge", -99.0) != -99.0])
     df_filtered = pd.DataFrame([r for r in raw_results if r.get("Alpha_Edge", -99.0) == -99.0])
     
@@ -233,6 +204,7 @@ def execute_matrix_processing(portfolio, today_str):
     rank_prob = df_active.sort_values(by="P_WPI", ascending=False).head(10).copy()
     rank_prob["Optimization_Category"] = "TOP_10_PROBABILITY"
 
+    # Concatenate streamlined arrays together
     final_df = pd.concat([rank_prob, df_filtered], ignore_index=True)
     
     if not final_df.empty:
@@ -245,7 +217,9 @@ def execute_matrix_processing(portfolio, today_str):
         file_exists = os.path.isfile(output_file)
         
         final_df.to_csv(output_file, mode='a', index=False, header=not file_exists)
-        print(f"📊 SUCCESS! Appended {len(final_df)} new live/upcoming entries to '{output_file}'.")
+        print(f"📊 SUCCESS! Appended {len(final_df)} new dynamic SportsDataverse entries cleanly to '{output_file}'.")
+    else:
+        print("⚠️ Pipeline alert: Calculated matrix returned empty. Data append skipped.")
 
 if __name__ == "__main__":
     run_cloud_pipeline()
